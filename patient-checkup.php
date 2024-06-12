@@ -54,12 +54,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Mengambil data riwayat antrian pasien
-$sql_history = "SELECT a.antrian, d.nama_dokter, jd.waktu_mulai, jd.waktu_selesai, a.status_antrian, a.dtmcrt, rm.id_rekam_medis 
-                FROM antrian a
-                INNER JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
-                INNER JOIN dokter d ON jd.id_dokter = d.id_dokter
-                INNER JOIN rekam_medis rm ON a.id_antrian = rm.id_antrian
-                WHERE a.id_pasien = $id_patient";
+$sql_history = "SELECT a.antrian, d.nama_dokter, jd.waktu_mulai, jd.waktu_selesai, a.status_antrian, a.dtmcrt, rm.id_rekam_medis, rm.pembayaran, rm.status_pembayaran
+FROM antrian a
+JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+JOIN dokter d ON jd.id_dokter = d.id_dokter
+LEFT JOIN rekam_medis rm ON a.id_antrian = rm.id_antrian
+WHERE a.id_pasien = $id_patient;
+";
 $result_history = mysqli_query($conn, $sql_history);
 ?>
 
@@ -245,6 +246,8 @@ $result_history = mysqli_query($conn, $sql_history);
                                 <td>{$estimasi_waktu}</td>
                                 <td>{$row['status_antrian']}</td>
                                 <td>RM00" . htmlspecialchars($row['id_rekam_medis']) . "</td>
+                                <td>{$row['pembayaran']}</td>
+                                <td>{$row['status_pembayaran']}</td>
                                 <td>
                                     <form action='patient-detail.php' method='GET'>
                                         <input type='hidden' name='id_rekam_medis' value='" . htmlspecialchars($row['id_rekam_medis']) . "'>

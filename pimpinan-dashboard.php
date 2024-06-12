@@ -2,7 +2,7 @@
 session_start();
 include('db_connection.php'); 
 
-if (!isset($_SESSION['login_doctor'])) {
+if (!isset($_SESSION['login_pimpinan'])) {
     header("location: pages-login-doctor.php");
     exit;
 }
@@ -36,7 +36,7 @@ $total_patient = $row['total_patient'];
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Dashboard Dokter</title>
+  <title>Dashboard Pimpinan</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
   <link href="assets/img/favicon.png" rel="icon">
@@ -73,13 +73,13 @@ $total_patient = $row['total_patient'];
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
             <!-- <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle"> -->
-            <span class="d-none d-md-block dropdown-toggle ps-2"><?php echo $_SESSION['login_doctor']; ?></span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"><?php echo $_SESSION['login_pimpinan']; ?></span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-            <h6><?php echo $_SESSION['login_doctor']; ?></h6>
-              <span>Admin</span>
+            <h6><?php echo $_SESSION['login_pimpinan']; ?></h6>
+              <span>Pimpinan Klinik</span>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -102,37 +102,51 @@ $total_patient = $row['total_patient'];
   <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
       <li class="nav-item">
-        <a class="nav-link " href="doctor-dashboard.php">
+        <a class="nav-link " href="pimpinan-dashboard.php">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-praktik.php">
-          <i class="bi bi-person"></i>
-          <span>Praktik</span>
+        <a class="nav-link collapsed" href="pimpinan-doctor.php">
+          <i class="bi bi-person-badge"></i>
+          <span>Rekap Doctor</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-patient.php">
-          <i class="bi bi-person"></i>
-          <span>Pasien</span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-history.php">
-          <i class="bi bi-journal-text"></i>
-          <span>Riwayat Praktik</span>
+        <a class="nav-link collapsed" href="pimpinan-farmasi.php">
+          <i class="bi bi-hospital"></i>
+          <span>Rekap Farmasi</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-rating.php">
-          <i class="bi bi-bar-chart"></i>
-          <span>Rating</span>
+        <a class="nav-link collapsed" href="pimpinan-pasien.php">
+          <i class="bi bi-file-medical"></i>
+          <span>Rekap Pasien</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-obat.php">
+          <i class="bi bi-capsule"></i>
+          <span>Rekap Obat</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-rekammedis.php">
+          <i class="bi bi-clipboard-data"></i>
+          <span>Rekap Rekam Medis</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-rating.php">
+          <i class="bi bi-star"></i>
+          <span>Rekap Rating</span>
         </a>
       </li>
     </ul>

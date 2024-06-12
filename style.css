@@ -1,0 +1,20 @@
+.rating {
+    unicode-bidi: bidi-override;
+    direction: rtl;
+}
+
+.rating .star {
+    display: inline-block;
+    font-size: 24px;
+    cursor: pointer;
+    color: #ccc;
+}
+
+.rating .star:hover,
+.rating .star:hover ~ .star {
+    color: #FFD700; /* warna bintang saat dihover */
+}
+
+.rating .star.active {
+    color: #FFD700; /* warna bintang yang dipilih */
+}

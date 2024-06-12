@@ -86,6 +86,27 @@ while ($row_rating = $result_rating->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Pemeriksaan</title>
+    <style>
+        /* CSS Anda di sini */
+        .rating {
+            display: flex;
+            flex-direction: row; /* Urutan bintang dari kiri ke kanan */
+        }
+
+        .rating .star {
+            display: inline-block;
+            font-size: 24px;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        .rating .star:hover,
+        .rating .star.active,
+        .rating .star:hover ~ .star {
+            color: #FFD700; /* warna bintang saat dihover dan yang dipilih */
+        }
+    </style>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 
@@ -188,15 +209,16 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                                 <input type="hidden" name="id_rekam_medis" value="<?php echo $id; ?>">
                                 <div class="form-group">
                                     <label for="rating">Rating (1-5)</label>
-                                    <select name="rating" id="rating" class="form-control" required>
-                                        <option value="">Pilih Rating</option>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
+                                    <div class="rating">
+                                        <span class="star" data-value="1">&#9733;</span>
+                                        <span class="star" data-value="2">&#9733;</span>
+                                        <span class="star" data-value="3">&#9733;</span>
+                                        <span class="star" data-value="4">&#9733;</span>
+                                        <span class="star" data-value="5">&#9733;</span>
+                                        <input type="hidden" name="rating" id="rating" value="" required>
+                                    </div>
                                 </div>
+
                                 <div class="form-group mt-3">
                                     <label for="ulasan">Ulasan</label>
                                     <textarea name="ulasan" id="ulasan" rows="4" class="form-control" required></textarea>
@@ -237,5 +259,25 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                     </div>
     </div>
 </body>
+<script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const stars = document.querySelectorAll(".star");
 
+            stars.forEach(star => {
+                star.addEventListener("click", function() {
+                    const value = this.getAttribute("data-value");
+                    document.getElementById("rating").value = value;
+
+                    // Tambahkan class 'active' pada bintang yang dipilih dan bintang sebelumnya
+                    stars.forEach(s => {
+                        if (parseInt(s.getAttribute("data-value")) <= parseInt(value)) {
+                            s.classList.add("active");
+                        } else {
+                            s.classList.remove("active");
+                        }
+                    });
+                });
+            });
+        });
+    </script>
 </html>

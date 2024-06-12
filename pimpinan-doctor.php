@@ -2,7 +2,7 @@
 session_start();
 include('db_connection.php'); 
 
-if (!isset($_SESSION['login_doctor'])) {
+if (!isset($_SESSION['login_pimpinan'])) {
     header("location: pages-login-doctor.php");
     exit;
 }
@@ -36,7 +36,7 @@ $total_patient = $row['total_patient'];
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Dashboard Dokter</title>
+  <title>Dashboard Pimpinan</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
   <link href="assets/img/favicon.png" rel="icon">
@@ -73,13 +73,13 @@ $total_patient = $row['total_patient'];
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
             <!-- <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle"> -->
-            <span class="d-none d-md-block dropdown-toggle ps-2"><?php echo $_SESSION['login_doctor']; ?></span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"><?php echo $_SESSION['login_pimpinan']; ?></span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-            <h6><?php echo $_SESSION['login_doctor']; ?></h6>
-              <span>Admin</span>
+            <h6><?php echo $_SESSION['login_pimpinan']; ?></h6>
+              <span>Pimpinan Klinik</span>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -102,37 +102,51 @@ $total_patient = $row['total_patient'];
   <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
       <li class="nav-item">
-        <a class="nav-link " href="doctor-dashboard.php">
+        <a class="nav-link collapsed" href="pimpinan-dashboard.php">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-praktik.php">
-          <i class="bi bi-person"></i>
-          <span>Praktik</span>
+        <a class="nav-link " href="pimpinan-doctor.php">
+          <i class="bi bi-person-badge"></i>
+          <span>Rekap Doctor</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-patient.php">
-          <i class="bi bi-person"></i>
-          <span>Pasien</span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-history.php">
-          <i class="bi bi-journal-text"></i>
-          <span>Riwayat Praktik</span>
+        <a class="nav-link collapsed" href="pimpinan-farmasi.php">
+          <i class="bi bi-hospital"></i>
+          <span>Rekap Farmasi</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="doctor-rating.php">
-          <i class="bi bi-bar-chart"></i>
-          <span>Rating</span>
+        <a class="nav-link collapsed" href="pimpinan-pasien.php">
+          <i class="bi bi-file-medical"></i>
+          <span>Rekap Pasien</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-obat.php">
+          <i class="bi bi-capsule"></i>
+          <span>Rekap Obat</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-rekammedis.php">
+          <i class="bi bi-clipboard-data"></i>
+          <span>Rekap Rekam Medis</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="pimpinan-rating.php">
+          <i class="bi bi-star"></i>
+          <span>Rekap Rating</span>
         </a>
       </li>
     </ul>
@@ -150,87 +164,54 @@ $total_patient = $row['total_patient'];
       </nav>
     </div><!-- End Page Title -->
 
-    <section class="section dashboard">
+    <section class="section">
       <div class="row">
-
-        <!-- Left side columns -->
         <div class="col-lg-12">
-  <div class="row">
-
-  <div class="col-xxl-3 col-md-6">
-    <div class="card info-card sales-card">
-      <div class="card-body">
-        <h5 class="card-title">Jumlah Dokter <span></span></h5>
-        <div class="d-flex align-items-center">
-          <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-            <i class="bi bi-people"></i>
-          </div>
-          <div class="ps-3">
-            <h6><?php echo $total_doctor; ?></h6>
-            <span class="text-success small pt-1 fw-bold"></span> <span class="text-muted small pt-2 ps-1">Terdaftar</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-    <div class="col-xxl-3 col-md-6">
-    <div class="card info-card revenue-card">
-      <div class="card-body">
-        <h5 class="card-title">Jumlah Obat <span></span></h5>
-        <div class="d-flex align-items-center">
-          <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-            <i class="bi bi-capsule"></i>
-          </div>
-          <div class="ps-3">
-            <h6><?php echo $total_medicine; ?></h6>
-            <span class="text-success small pt-1 fw-bold"></span> <span class="text-muted small pt-2 ps-1">Terdaftar</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-xxl-3 col-md-6">
-    <div class="card info-card customers-card">
-      <div class="card-body">
-        <h5 class="card-title">Jumlah Farmasi <span></span></h5>
-        <div class="d-flex align-items-center">
-          <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-            <i class="bi bi-people"></i>
-          </div>
-          <div class="ps-3">
-            <h6><?php echo $total_pharmachy; ?></h6>
-            <span class="text-danger small pt-1 fw-bold"></span> <span class="text-muted small pt-2 ps-1">Terdaftar</span>
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Rekap Dokter</h5>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">ID Dokter</th>
+                    <th scope="col">NIP</th>
+                    <th scope="col">Nama Dokter</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Spesialis</th>
+                    <th scope="col">Mulai Bekerja</th>
+                    <th scope="col">Alamat</th>
+                    <th scope="col">Harga Per Kunjungan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php
+                  $sql = "SELECT * FROM dokter";
+                  $result = $conn->query($sql);
+                  if ($result->num_rows > 0):
+                    while ($row = $result->fetch_assoc()): ?>
+                      <tr>
+                        <td><?php echo $row['id_dokter']; ?></td>
+                        <td><?php echo $row['nip']; ?></td>
+                        <td><?php echo $row['nama_dokter']; ?></td>
+                        <td><?php echo $row['email_dokter']; ?></td>
+                        <td><?php echo $row['spesialis']; ?></td>
+                        <td><?php echo $row['mulai_bekerja']; ?></td>
+                        <td><?php echo $row['alamat_dokter']; ?></td>
+                        <td><?php echo 'Rp ' . number_format($row['harga_perkunjungan'], 2, ',', '.'); ?></td>
+                      </tr>
+                    <?php endwhile; ?>
+                  <?php else: ?>
+                    <tr><td colspan="8" class="text-center">Tidak ada data dokter</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+              <a href="generatepdf_doctor.php?type=doctor" target="_blank" class="btn btn-primary">Cetak PDF Dokter</a>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+</section>
 
-  <div class="col-xxl-3 col-md-6">
-    <div class="card info-card customers-card">
-      <div class="card-body">
-        <h5 class="card-title">Jumlah Pasien <span></span></h5>
-        <div class="d-flex align-items-center">
-          <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-            <i class="bi bi-people"></i>
-          </div>
-          <div class="ps-3">
-            <h6><?php echo $total_patient; ?></h6>
-            <span class="text-danger small pt-1 fw-bold"></span> <span class="text-muted small pt-2 ps-1">Terdaftar</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  </div>
-</div>
-
-
-      </div>
-    </section>
 
   </main><!-- End #main -->
 

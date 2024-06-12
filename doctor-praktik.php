@@ -187,6 +187,13 @@ $conn->close();
           <span>Riwayat Praktik</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="doctor-rating.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Rating</span>
+        </a>
+      </li>
     </ul>
   </aside>
 
