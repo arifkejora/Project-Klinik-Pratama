@@ -19,17 +19,29 @@ if (!$details) {
     $gender = isset($details['jenis_kelamin']) ? $details['jenis_kelamin'] : '';
     $birth_date = isset($details['tanggal_lahir']) ? $details['tanggal_lahir'] : '';
     $address = isset($details['alamat_pasien']) ? $details['alamat_pasien'] : '';
+    $provinsi = isset($details['province']) ? $details['province'] : '';
+    $kabupaten = isset($details['city']) ? $details['city'] : '';
+    $kecamatan = isset($details['district']) ? $details['district'] : '';
+    $desa = isset($details['subdistrict']) ? $details['subdistrict'] : '';
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $gender = $_POST['gender'];
     $birth_date = $_POST['birth_date'];
     $address = $_POST['address'];
+    $provinsi = $_POST['province'];
+    $kabupaten = $_POST['city'];
+    $kecamatan = $_POST['district'];
+    $desa = $_POST['subdistrict'];
 
     // To protect against MySQL injection
     $gender = mysqli_real_escape_string($conn, $gender);
     $birth_date = mysqli_real_escape_string($conn, $birth_date);
     $address = mysqli_real_escape_string($conn, $address);
+    $provinsi = mysqli_real_escape_string($conn, $provinsi);
+    $kabupaten = mysqli_real_escape_string($conn, $kabupaten);
+    $kecamatan = mysqli_real_escape_string($conn, $kecamatan);
+    $desa = mysqli_real_escape_string($conn, $desa);
 
     // Check if the detail already exists for the patient
     $check_sql = "SELECT * FROM detail_pasien WHERE id_pasien = '$id_patient'";
@@ -38,7 +50,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($count == 1) {
         // Update existing detail
-        $update_sql = "UPDATE detail_pasien SET jenis_kelamin = '$gender', tanggal_lahir = '$birth_date', alamat_pasien = '$address' WHERE id_pasien = '$id_patient'";
+        $update_sql = "UPDATE detail_pasien SET jenis_kelamin = '$gender', tanggal_lahir = '$birth_date', alamat_pasien = '$address', provinsi = '$provinsi', kabupaten = '$kabupaten', kecamatan = '$kecamatan', desa = '$desa' WHERE id_pasien = '$id_patient'";
         $update_result = mysqli_query($conn, $update_sql);
         
         if ($update_result) {
@@ -48,7 +60,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     } else {
         // Insert new detail
-        $insert_sql = "INSERT INTO detail_pasien (id_pasien, jenis_kelamin, tanggal_lahir, alamat_pasien) VALUES ('$id_patient', '$gender', '$birth_date', '$address')";
+        $insert_sql = "INSERT INTO detail_pasien (id_pasien, jenis_kelamin, tanggal_lahir, alamat_pasien, provinsi, kabupaten, kecamatan, desa) VALUES ('$id_patient', '$gender', '$birth_date', '$address', '$provinsi', '$kabupaten', '$kecamatan', '$desa')";
         $insert_result = mysqli_query($conn, $insert_sql);
         
         if ($insert_result) {
@@ -216,9 +228,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     </div>
 
                                     <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Tanggal Lahir</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo $details_missing ? '' : $birth_date; ?></div>
-                                    </div>
+                                      <div class="col-lg-3 col-md-4 label">Tanggal Lahir</div>
+                                      <div class="col-lg-9 col-md-8"><?php echo $details_missing ? '' : date('d-m-Y', strtotime($birth_date)); ?></div>
+                                  </div>
+
 
                                     <div class="row">
                                         <div class="col-lg-3 col-md-4 label">Alamat</div>
@@ -267,7 +280,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="invalid-feedback">Pilih Tanggal Lahir Kamu!</div>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                          <label for="province" class="col-md-4 col-lg-3 col-form-label">Provinsi</label>
+                          <div class="col-md-8 col-lg-9">
+                              <select id="province" class="form-select" name="province" required>
+                                  <option selected disabled value="">Pilih Provinsi...</option>
+                              </select>
+                              <div class="invalid-feedback">Pilih Provinsi Anda!</div>
+                          </div>
+                      </div>
 
+                      <div class="row mb-3">
+                          <label for="city" class="col-md-4 col-lg-3 col-form-label">Kabupaten/Kota</label>
+                          <div class="col-md-8 col-lg-9">
+                              <select id="city" class="form-select" name="city" required>
+                                  <option selected disabled value="">Pilih Kabupaten/Kota...</option>
+                              </select>
+                              <div class="invalid-feedback">Pilih Kabupaten/Kota Anda!</div>
+                          </div>
+                      </div>
+
+                      <div class="row mb-3">
+                          <label for="district" class="col-md-4 col-lg-3 col-form-label">Kecamatan</label>
+                          <div class="col-md-8 col-lg-9">
+                              <select id="district" class="form-select" name="district" required>
+                                  <option selected disabled value="">Pilih Kecamatan...</option>
+                              </select>
+                              <div class="invalid-feedback">Pilih Kecamatan Anda!</div>
+                          </div>
+                      </div>
+
+                      <div class="row mb-3">
+                          <label for="subdistrict" class="col-md-4 col-lg-3 col-form-label">Kelurahan</label>
+                          <div class="col-md-8 col-lg-9">
+                              <select id="subdistrict" class="form-select" name="subdistrict" required>
+                                  <option selected disabled value="">Pilih Kelurahan...</option>
+                              </select>
+                              <div class="invalid-feedback">Pilih Kelurahan Anda!</div>
+                          </div>
+                      </div>
                     <div class="row mb-3">
                         <label for="address" class="col-md-4 col-lg-3 col-form-label">Alamat</label>
                         <div class="col-md-8 col-lg-9">
@@ -392,7 +443,82 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
+    <script>
+        $(document).ready(function () {
+            // Load provinces from local JSON file
+            $.getJSON('./data/provinsi.json', function (data) {
+                var options = '<option selected disabled value="">Pilih Provinsi...</option>';
+                $.each(data, function (index, value) {
+                    options += '<option value="' + value.id + '">' + value.name + '</option>';
+                });
+                $('#province').html(options);
+            });
+
+            // Load cities based on province selection
+            $('#province').change(function () {
+                var provinceId = $(this).val();
+                if (provinceId) {
+                    $.getJSON('./data/kabupaten.json', function (data) {
+                        var options = '<option selected disabled value="">Pilih Kabupaten/Kota...</option>';
+                        $.each(data, function (index, value) {
+                            if (value.idprovinsi == provinceId) {
+                                options += '<option value="' + value.id + '">' + value.name + '</option>';
+                            }
+                        });
+                        $('#city').html(options);
+                        $('#district').html('<option selected disabled value="">Pilih Kecamatan...</option>');
+                        $('#subdistrict').html('<option selected disabled value="">Pilih Kelurahan...</option>');
+                    });
+                } else {
+                    $('#city').html('<option selected disabled value="">Pilih Kabupaten/Kota...</option>');
+                    $('#district').html('<option selected disabled value="">Pilih Kecamatan...</option>');
+                    $('#subdistrict').html('<option selected disabled value="">Pilih Kelurahan...</option>');
+                }
+            });
+
+            // Load districts based on city selection
+            $('#city').change(function () {
+                var cityId = $(this).val();
+                if (cityId) {
+                    $.getJSON('./data/kecamatan.json', function (data) {
+                        var options = '<option selected disabled value="">Pilih Kecamatan...</option>';
+                        $.each(data, function (index, value) {
+                            if (value.idkabupaten == cityId) {
+                                options += '<option value="' + value.id + '">' + value.name + '</option>';
+                            }
+                        });
+                        $('#district').html(options);
+                        $('#subdistrict').html('<option selected disabled value="">Pilih Kelurahan...</option>');
+                    });
+                } else {
+                    $('#district').html('<option selected disabled value="">Pilih Kecamatan...</option>');
+                    $('#subdistrict').html('<option selected disabled value="">Pilih Kelurahan...</option>');
+                }
+            });
+
+            // Load subdistricts based on district selection
+            $('#district').change(function () {
+                var districtId = $(this).val();
+                if (districtId) {
+                    $.getJSON('./data/desa.json', function (data) {
+                        var options = '<option selected disabled value="">Pilih Kelurahan...</option>';
+                        $.each(data, function (index, value) {
+                            if (value.idkecamatan == districtId) {
+                                options += '<option value="' + value.id + '">' + value.desa + '</option>';
+                            }
+                        });
+                        $('#subdistrict').html(options);
+                    });
+                } else {
+                    $('#subdistrict').html('<option selected disabled value="">Pilih Kelurahan...</option>');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

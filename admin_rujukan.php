@@ -70,14 +70,17 @@ $umur_pasien = isset($row['tanggal_lahir']) ? hitungUmur($row['tanggal_lahir']) 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah_rujukan'])) {
     $no_rekam_medis = $_POST['id_rekam_medis'];
     $nama_rumah_sakit = $_POST['nama_rumah_sakit_rujukan'];
+    $nama_dokter = $_POST['nama_dokter'];
+    $poli = $_POST['poli'];
     $tanggal_rujukan = $_POST['tanggal_rujukan'];
 
     // Query untuk menyimpan data rujukan ke dalam tabel
-    $sql_insert = "INSERT INTO rujukan (id_rekammedis, nama_rumahsakit, tanggal_rujukan) 
-                   VALUES (?, ?, ?)";
+    $sql_insert = "INSERT INTO rujukan (id_rekammedis, nama_rumahsakit, nama_dokter, poli, tanggal_rujukan) 
+    VALUES (?, ?, ?, ?, ?)";
 
-    $stmt_insert = $conn->prepare($sql_insert);
-    $stmt_insert->bind_param("iss", $no_rekam_medis, $nama_rumah_sakit, $tanggal_rujukan);
+$stmt_insert = $conn->prepare($sql_insert);
+$stmt_insert->bind_param("issss", $no_rekam_medis, $nama_rumah_sakit, $nama_dokter, $poli, $tanggal_rujukan);
+
 
     if ($stmt_insert->execute()) {
         $stmt_insert->close();
@@ -271,6 +274,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah_rujukan'])) {
             <div class="mb-3">
                 <label for="nama_rumah_sakit_rujukan" class="form-label">Nama Rumah Sakit Rujukan</label>
                 <input type="text" class="form-control" id="nama_rumah_sakit_rujukan" name="nama_rumah_sakit_rujukan" required>
+            </div>
+            <div class="mb-3">
+                <label for="nama_dokter" class="form-label">Nama Dokter</label>
+                <input type="text" class="form-control" id="nama_dokter" name="nama_dokter" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="poli" class="form-label">Poli</label>
+                <input type="text" class="form-control" id="poli" name="poli" required>
             </div>
             <div class="mb-3">
                 <label for="tanggal_rujukan" class="form-label">Tanggal Rujukan</label>
