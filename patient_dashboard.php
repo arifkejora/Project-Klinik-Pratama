@@ -277,21 +277,30 @@ function getDesaName($id, $desa_data) {
                                       <div class="col-lg-9 col-md-8"><?php echo $details_missing ? '' : date('d-m-Y', strtotime($birth_date)); ?></div>
                                   </div>
                                   <div class="row">
-                                      <div class="col-lg-3 col-md-4 label">Provinsi</div>
-                                      <div class="col-lg-9 col-md-8"><?php echo getProvinceName($provinsi_id, $provinsi_data); ?></div>
-                                  </div>
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Kabupaten</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo getKabupatenName($kabupaten_id, $kabupaten_data); ?></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Kecamatan</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo getKecamatanName($kecamatan_id, $kecamatan_data); ?></div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-3 col-md-4 label">Desa</div>
-                                        <div class="col-lg-9 col-md-8"><?php echo getDesaName($desa_id, $desa_data); ?></div>
-                                    </div>
+    <div class="col-lg-3 col-md-4 label">Provinsi</div>
+    <div class="col-lg-9 col-md-8">
+        <?php echo isset($provinsi_id) ? getProvinceName($provinsi_id, $provinsi_data) : ''; ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-3 col-md-4 label">Kabupaten</div>
+    <div class="col-lg-9 col-md-8">
+        <?php echo isset($kabupaten_id) ? getKabupatenName($kabupaten_id, $kabupaten_data) : ''; ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-3 col-md-4 label">Kecamatan</div>
+    <div class="col-lg-9 col-md-8">
+        <?php echo isset($kecamatan_id) ? getKecamatanName($kecamatan_id, $kecamatan_data) : ''; ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-lg-3 col-md-4 label">Desa</div>
+    <div class="col-lg-9 col-md-8">
+        <?php echo isset($desa_id) ? getDesaName($desa_id, $desa_data) : ''; ?>
+    </div>
+</div>
+
                                     <div class="row">
                                         <div class="col-lg-3 col-md-4 label">Alamat</div>
                                         <div class="col-lg-9 col-md-8"><?php echo $details_missing ? '' : $address; ?></div>
