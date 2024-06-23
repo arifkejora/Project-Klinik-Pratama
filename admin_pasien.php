@@ -7,32 +7,29 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
-// Insert Data
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $nip = mysqli_real_escape_string($conn, $_POST['nip']);
-  $name = mysqli_real_escape_string($conn, $_POST['name']);
-  $email = mysqli_real_escape_string($conn, $_POST['email']);
-  $password = mysqli_real_escape_string($conn, $_POST['password']);
-  $address = mysqli_real_escape_string($conn, $_POST['address']);
-  $startdate = mysqli_real_escape_string($conn, $_POST['startdate']);
+$queueData = [];
 
-  // Hashing the password
-  $password = md5($password);
+$queueQuery = "
+    SELECT a.id_antrian, p.nama_pasien, a.antrian, a.status_antrian
+    FROM antrian a 
+    JOIN pasien p ON a.id_pasien = p.id_pasien 
+    JOIN jadwal_dokter jd ON jd.id_jadwal = a.id_jadwal
+    WHERE (a.status_antrian = 'Menunggu' OR a.status_antrian = 'Sedang Diperiksa') 
+    ORDER BY a.antrian ASC;
+";
 
-  $sql = "INSERT INTO farmasi (NIP, nama_farmasi, mulai_bekerja, email_farmasi, katasandi_farmasi, alamat_farmasi) 
-          VALUES ('$nip', '$name', '$startdate', '$email', '$password', '$address')";
+    
+$queueStmt = $conn->prepare($queueQuery);
+$queueStmt->execute();
+$queueResult = $queueStmt->get_result();
 
-  if (mysqli_query($conn, $sql)) {
-      $message = "Data berhasil disimpan!";
-  } else {
-      $message = "Error: " . $sql . "<br>" . mysqli_error($conn);
-  }
+if ($queueResult->num_rows > 0) {
+    while ($row = $queueResult->fetch_assoc()) {
+        $queueData[] = $row;
+    }
 }
 
-// View Data
-$sql = "SELECT id_farmasi, NIP, nama_farmasi, email_farmasi, mulai_bekerja FROM farmasi";
-$result = mysqli_query($conn, $sql);
-
+$queueStmt->close();
 ?>
 
 
@@ -150,58 +147,51 @@ $result = mysqli_query($conn, $sql);
 
   <main id="main" class="main">
 
-
-
-    <section class="section">
-  <div class="row">
-    <div class="col-lg-12">
-      <div class="card mt-5">
-        <div class="card-body">
-          <h5 class="card-title">Daftar Anggota Farmasi</h5>
-          <table class="table table-bordered">
+  <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+        <div class="card">
+            <div class="card-body">
+            <h5 class="card-title">Antrian Pasien Hari Ini</h5>
+            <table class="table table-bordered">
             <thead>
-              <tr>
-                <th scope="col">NIP</th>
-                <th scope="col">Nama</th>
-                <th scope="col">Email</th>
-                <th scope="col">Tanggal Mulai Kerja</th>
-                <th scope="col">Lama Bekerja</th>
-                <th scope="col">Aksi</th>
-              </tr>
+                <tr>
+                    <th scope="col">Nama Pasien</th>
+                    <th scope="col">Nomor Antrian</th>
+                    <th scope="col">Status Antrian</th>
+                    <th scope="col">Aksi</th>
+                </tr>
             </thead>
             <tbody>
-              <?php
-              if (mysqli_num_rows($result) > 0) {
-                while($row = mysqli_fetch_assoc($result)) {
-                  // Calculate the length of service
-                  $startdate = new DateTime($row['mulai_bekerja']);
-                  $today = new DateTime();
-                  $interval = $today->diff($startdate);
-                  $lama_bekerja = $interval->y . " tahun, " . $interval->m . " bulan, " . $interval->d . " hari";
-
-                  echo "<tr>";
-                  echo "<td>" . $row['NIP'] . "</td>";
-                  echo "<td>" . $row['nama_farmasi'] . "</td>";
-                  echo "<td>" . $row['email_farmasi'] . "</td>";
-                  echo "<td>" . $row['mulai_bekerja'] . "</td>";
-                  echo "<td>" . $lama_bekerja . "</td>";
-                  echo "<td>
-                          <a href='edit_farmasi.php?id_farmasi=" . $row['id_farmasi'] . "' class='btn btn-primary'><i class='bi bi-pencil me-1'></i> Edit</a>
-                          <a href='delete_farmasi.php?id_farmasi=" . $row['id_farmasi'] . "' class='btn btn-danger'><i class='bi bi-trash me-1'></i> Hapus</a>
-                        </td>";
-                  echo "</tr>";
-                }
-              } else {
-                echo "<tr><td colspan='6' class='text-center'>No data found</td></tr>";
-              }
-              ?>
+                <?php if (!empty($queueData)): ?>
+                    <?php foreach ($queueData as $row): ?>
+                        <tr>
+                            <td><?php echo $row['nama_pasien']; ?></td>
+                            <td><?php echo $row['antrian']; ?></td>
+                            <td><?php echo $row['status_antrian']; ?></td>
+                            <td>
+                            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                                <input type="hidden" name="id_antrian" value="<?php echo htmlspecialchars($row['id_antrian']); ?>">
+                                <?php if ($row['status_antrian'] === 'Menunggu'): ?>
+                                    <a href="admin-periksa.php?id_antrian=<?php echo htmlspecialchars($row['id_antrian']); ?>" class="btn btn-success">Periksa Pasien</a>
+                                <?php elseif ($row['status_antrian'] === 'Sedang Diperiksa'): ?>
+                                    <a href="admin-periksa.php?id_antrian=<?php echo htmlspecialchars($row['id_antrian']); ?>" class="btn btn-success">Sedang Diperiksa</a>
+                                <?php endif; ?>
+                                <button type="submit" name="action" value="tolak" class="btn btn-danger">Tolak</button>
+                            </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr><td colspan="4" class="text-center">Tidak ada data antrian</td></tr>
+                <?php endif; ?>
             </tbody>
-          </table>
+        </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
 
   </main>
 
