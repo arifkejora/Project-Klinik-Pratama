@@ -131,17 +131,16 @@ $result = mysqli_query($conn, $sql);
           <span>Pembayaran</span>
         </a>
       </li>
-
-
+      
       <li class="nav-item">
-        <a class="nav-link" href="admin_rating.php">
+        <a class="nav-link collapsed" href="admin_rating.php">
           <i class="bi bi-bar-chart"></i>
           <span>Rating</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="admin_pasien.php">
+        <a class="nav-link" href="admin_pasien.php">
           <i class="bi bi-bar-chart"></i>
           <span>Pasien</span>
         </a>
@@ -151,62 +150,58 @@ $result = mysqli_query($conn, $sql);
 
   <main id="main" class="main">
 
-    <div class="pagetitle">
-      <h1>Rating</h1>
-      <nav>
-        <ol class="breadcrumb">
-        </ol>
-      </nav>
-    </div>
+
 
     <section class="section">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Daftar Rating & Ulasan</h5>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th scope="col">Rekam Medis</th>
-                                <th scope="col">Rating</th>
-                                <th scope="col">Ulasan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            include('db_connection.php');
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card mt-5">
+        <div class="card-body">
+          <h5 class="card-title">Daftar Anggota Farmasi</h5>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <th scope="col">NIP</th>
+                <th scope="col">Nama</th>
+                <th scope="col">Email</th>
+                <th scope="col">Tanggal Mulai Kerja</th>
+                <th scope="col">Lama Bekerja</th>
+                <th scope="col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php
+              if (mysqli_num_rows($result) > 0) {
+                while($row = mysqli_fetch_assoc($result)) {
+                  // Calculate the length of service
+                  $startdate = new DateTime($row['mulai_bekerja']);
+                  $today = new DateTime();
+                  $interval = $today->diff($startdate);
+                  $lama_bekerja = $interval->y . " tahun, " . $interval->m . " bulan, " . $interval->d . " hari";
 
-                            // Query untuk mendapatkan semua data rating
-                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rating, r.ulasan 
-                                    FROM rating r";
-                            $result = $conn->query($sql);
-
-                            if ($result->num_rows > 0) {
-                                while ($rating = $result->fetch_assoc()) {
-                                    echo "<tr>";
-                                    echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
-
-                                    echo "<td>" . $rating['rating'] . " Bintang</td>";
-                                    echo "<td>" . $rating['ulasan'] . "</td>";
-                                    echo "</tr>";
-                                }
-                            } else {
-                                echo "<tr><td colspan='4' class='text-center'>Tidak ada data rating</td></tr>";
-                            }
-
-                            // Menutup koneksi
-                            $conn->close();
-                            ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                  echo "<tr>";
+                  echo "<td>" . $row['NIP'] . "</td>";
+                  echo "<td>" . $row['nama_farmasi'] . "</td>";
+                  echo "<td>" . $row['email_farmasi'] . "</td>";
+                  echo "<td>" . $row['mulai_bekerja'] . "</td>";
+                  echo "<td>" . $lama_bekerja . "</td>";
+                  echo "<td>
+                          <a href='edit_farmasi.php?id_farmasi=" . $row['id_farmasi'] . "' class='btn btn-primary'><i class='bi bi-pencil me-1'></i> Edit</a>
+                          <a href='delete_farmasi.php?id_farmasi=" . $row['id_farmasi'] . "' class='btn btn-danger'><i class='bi bi-trash me-1'></i> Hapus</a>
+                        </td>";
+                  echo "</tr>";
+                }
+              } else {
+                echo "<tr><td colspan='6' class='text-center'>No data found</td></tr>";
+              }
+              ?>
+            </tbody>
+          </table>
         </div>
+      </div>
     </div>
+  </div>
 </section>
-
-
 
   </main>
 

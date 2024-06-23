@@ -193,6 +193,13 @@ $stmt_insert->bind_param("issss", $no_rekam_medis, $nama_rumah_sakit, $nama_dokt
           <span>Rating</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_pasien.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Pasien</span>
+        </a>
+      </li>
     </ul>
   </aside>
 
