@@ -105,12 +105,13 @@ if ($row = $result->fetch_assoc()) {
     $pdf->Cell(0, 7, ': ' . ($row['keluhan'] ?? ''), 0, 1, 'L');
     $pdf->Cell(40, 7, '         Diagnosa', 0, 0, 'L');
     $pdf->Cell(0, 7, ': ' . ($row['diagnosa'] ?? ''), 0, 1, 'L');
-    $pdf->Cell(40, 7, '         Nama Dokter', 0, 0, 'L');
-    $pdf->Cell(0, 7, ': ' . ($nama_dokter ?? ''), 0, 1, 'L');
-    $pdf->Cell(40, 7, '         Poli', 0, 0, 'L');
-    $pdf->Cell(0, 7, ': ' . ($poli ?? ''), 0, 1, 'L');
     
     $pdf->Ln(5);
+    
+    // Additional sentence
+    $pdf->MultiCell(0, 7, 'Mengingat kondisi pasien dan hasil pemeriksaan yang telah dilakukan, kami merujuk pasien ini untuk mendapatkan pemeriksaan dan penanganan lebih lanjut di ' . ($row['nama_rumahsakit'] ?? '') . ' di bawah pengawasan ' . ($nama_dokter ?? '') . ' yang menangani poli ' . ($poli ?? '') . '. Pasien dijadwalkan untuk konsultasi pada tanggal ' . convertToIndonesianDate($row['tanggal_rujukan'] ?? '') . '.', 0, 'J');
+    $pdf->Ln(5);
+
     // Penutup
     $pdf->MultiCell(0, 7, 'Demikian kami sampaikan, mohon konsultasi dan perawatan selanjutnya. Atas bantuannya dan kerjasama, kami ucapkan terima kasih.', 0, 'J');
     $pdf->Ln(10);
@@ -128,7 +129,6 @@ if ($row = $result->fetch_assoc()) {
 } else {
     echo "Data rekam medis tidak ditemukan.";
 }
-
 $stmt->close();
 $conn->close();
 
