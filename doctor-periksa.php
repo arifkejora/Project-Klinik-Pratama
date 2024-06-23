@@ -12,7 +12,7 @@ if (!$id_antrian) {
     die("ID Antrian tidak ditemukan.");
 }
 
-$rekamMedisQuery = "SELECT tekanan_darah, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
+$rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
 $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
 $rekamMedisStmt->bind_param("i", $id_antrian);
 $rekamMedisStmt->execute();
@@ -20,6 +20,12 @@ $rekamMedisResult = $rekamMedisStmt->get_result();
 
 if ($rekamMedisResult->num_rows > 0) {
     // Jika sudah ada rekam medis, lakukan update atau insert rekam medis
+    $row = $rekamMedisResult->fetch_assoc();
+    $id_rekammedis = $row['id_rekam_medis'];
+    $tekanan_darah = $row['tekanan_darah'];
+    $berat_badan = $row['berat_badan'];
+    $suhu_badan = $row['suhu_badan'];
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $keluhan = $_POST['keluhan'];
         $diagnosa = $_POST['diagnosa'];
@@ -29,47 +35,18 @@ if ($rekamMedisResult->num_rows > 0) {
         $hasil_pemeriksaan = $_POST['hasil_pemeriksaan'];
         $resep_obat = explode(',', $_POST['resep_obat_ids']);
 
-        // Check if rekam medis already exists
-        $row = $rekamMedisResult->fetch_assoc();
-        $id_rekammedis = $row['id_rekam_medis'];
-
-        if ($id_rekammedis) {
-            // Update rekam medis
-            $updateQuery = "
-                UPDATE rekam_medis 
-                SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?
-                WHERE id_antrian = ?";
-            $updateStmt = $conn->prepare($updateQuery);
-            $updateStmt->bind_param("ssssssi", $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
-            if (!$updateStmt->execute()) {
-                echo "Error updating rekam medis: " . $updateStmt->error;
-                exit;
-            }
-            $updateStmt->close();
-
-            // Delete existing prescriptions
-            $deleteResepQuery = "DELETE FROM resep_obat WHERE id_rekammedis = ?";
-            $deleteResepStmt = $conn->prepare($deleteResepQuery);
-            $deleteResepStmt->bind_param("i", $id_rekammedis);
-            if (!$deleteResepStmt->execute()) {
-                echo "Error deleting resep obat: " . $deleteResepStmt->error;
-                exit;
-            }
-            $deleteResepStmt->close();
-        } else {
-            // Insert new rekam medis if not exists
-            $insertQuery = "
-                INSERT INTO rekam_medis (id_antrian, keluhan, diagnosa, tekanan_darah, berat_badan, suhu_badan, hasil_pemeriksaan, status_pembayaran) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'Belum Lunas')";
-            $insertStmt = $conn->prepare($insertQuery);
-            $insertStmt->bind_param("issssss", $id_antrian, $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan);
-            if (!$insertStmt->execute()) {
-                echo "Error inserting rekam medis: " . $insertStmt->error;
-                exit;
-            }
-            $id_rekammedis = $insertStmt->insert_id;
-            $insertStmt->close();
+        // Update rekam medis
+        $updateQuery = "
+            UPDATE rekam_medis 
+            SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?
+            WHERE id_antrian = ?";
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bind_param("ssssssi", $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
+        if (!$updateStmt->execute()) {
+            echo "Error updating rekam medis: " . $updateStmt->error;
+            exit;
         }
+        $updateStmt->close();
 
         // Insert prescriptions
         $resepObatQuery = "
@@ -106,12 +83,6 @@ if ($rekamMedisResult->num_rows > 0) {
         header("Location: doctor-patient.php");
         exit;
     }
-
-    // Ambil data rekam medis yang sudah ada
-    $row = $rekamMedisResult->fetch_assoc();
-    $tekanan_darah = $row['tekanan_darah'];
-    $berat_badan = $row['berat_badan'];
-    $suhu_badan = $row['suhu_badan'];
 } else {
     // Jika belum ada rekam medis, tampilkan pesan error
     die("Rekam medis untuk ID Antrian tidak ditemukan.");
