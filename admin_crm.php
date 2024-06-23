@@ -7,31 +7,7 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
-$queueData = [];
-
-$queueQuery = "
-    SELECT a.id_antrian, p.nama_pasien, a.antrian, a.status_antrian
-    FROM antrian a 
-    JOIN pasien p ON a.id_pasien = p.id_pasien 
-    JOIN jadwal_dokter jd ON jd.id_jadwal = a.id_jadwal
-    WHERE (a.status_antrian = 'Menunggu' OR a.status_antrian = 'Sedang Diperiksa') 
-    ORDER BY a.antrian ASC;
-";
-
-    
-$queueStmt = $conn->prepare($queueQuery);
-$queueStmt->execute();
-$queueResult = $queueStmt->get_result();
-
-if ($queueResult->num_rows > 0) {
-    while ($row = $queueResult->fetch_assoc()) {
-        $queueData[] = $row;
-    }
-}
-
-$queueStmt->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,7 +49,7 @@ $queueStmt->close();
           </a>
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-            <h6><?php echo $_SESSION['login_user']; ?></h6>
+              <h6><?php echo $_SESSION['login_user']; ?></h6>
               <span>Admin</span>
             </li>
             <li>
@@ -81,8 +57,8 @@ $queueStmt->close();
             </li>
             <li>
               <a class="dropdown-item d-flex align-items-center" href="logout.php">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span>Sign Out</span>
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
               </a>
             </li>
           </ul>
@@ -114,7 +90,7 @@ $queueStmt->close();
           <span>Dokter</span>
         </a>
       </li>
-      
+
       <li class="nav-item">
         <a class="nav-link collapsed" href="admin_rujukan.php">
           <i class="bi bi-journal-text"></i>
@@ -128,7 +104,7 @@ $queueStmt->close();
           <span>Pembayaran</span>
         </a>
       </li>
-      
+
       <li class="nav-item">
         <a class="nav-link collapsed" href="admin_rating.php">
           <i class="bi bi-bar-chart"></i>
@@ -137,14 +113,14 @@ $queueStmt->close();
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" href="admin_pasien.php">
+        <a class="nav-link collapsed" href="admin_pasien.php">
           <i class="bi bi-bar-chart"></i>
           <span>Pasien</span>
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="admin_crm.php">
+        <a class="nav-link" href="admin_crm.php">
           <i class="bi bi-bar-chart"></i>
           <span>Broadcast</span>
         </a>
@@ -154,52 +130,28 @@ $queueStmt->close();
 
   <main id="main" class="main">
 
-  <section class="section">
-      <div class="row">
-        <div class="col-lg-12">
-        <div class="card">
-            <div class="card-body">
-            <h5 class="card-title">Antrian Pasien Hari Ini</h5>
-            <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th scope="col">Nama Pasien</th>
-                    <th scope="col">Nomor Antrian</th>
-                    <th scope="col">Status Antrian</th>
-                    <th scope="col">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($queueData)): ?>
-                    <?php foreach ($queueData as $row): ?>
-                        <tr>
-                            <td><?php echo $row['nama_pasien']; ?></td>
-                            <td><?php echo $row['antrian']; ?></td>
-                            <td><?php echo $row['status_antrian']; ?></td>
-                            <td>
-                            <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                                <input type="hidden" name="id_antrian" value="<?php echo htmlspecialchars($row['id_antrian']); ?>">
-                                <?php if ($row['status_antrian'] === 'Menunggu'): ?>
-                                    <a href="admin-periksa.php?id_antrian=<?php echo htmlspecialchars($row['id_antrian']); ?>" class="btn btn-success">Periksa Pasien</a>
-                                <?php elseif ($row['status_antrian'] === 'Sedang Diperiksa'): ?>
-                                    <a href="admin-periksa.php?id_antrian=<?php echo htmlspecialchars($row['id_antrian']); ?>" class="btn btn-success">Sedang Diperiksa</a>
-                                <?php endif; ?>
-                                <button type="submit" name="action" value="tolak" class="btn btn-danger">Tolak</button>
-                            </form>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr><td colspan="4" class="text-center">Tidak ada data antrian</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="pagetitle">
+      <h1>Broadcast</h1>
+      <nav>
+        <ol class="breadcrumb">
+        </ol>
+      </nav>
+    </div>
 
+    <section class="section">
+  <div class="row">
+  <div class="col-md-12">
+    <form action="send_message.php" method="POST">
+        <textarea class="form-control" id="inputNoRekamMedis" name="message" placeholder="Masukkan Pesan Broadcast" required rows="4"></textarea>
+        <input type="hidden" name="target" value="all"> <!-- Ini bisa disesuaikan dengan kebutuhan -->
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary">Kirim Broadcast</button>
+        </div>
+    </form>
+</div>
+
+  </div>
+</section>
   </main>
 
   <footer id="footer" class="footer">
@@ -224,3 +176,4 @@ $queueStmt->close();
 </body>
 
 </html>
+

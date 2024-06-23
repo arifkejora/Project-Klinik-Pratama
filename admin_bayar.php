@@ -158,6 +158,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <span>Pasien</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_crm.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Broadcast</span>
+        </a>
+      </li>
     </ul>
   </aside>
 
