@@ -24,7 +24,7 @@ function generatePharmacyPDF($conn) {
     $pdf->Ln(5);
 
     $pdf->SetFont('Arial', 'B', 14);
-    $pdf->Cell(0, 10, 'Rekap Farmasi', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Laporan Farmasi', 0, 1, 'C');
     $pdf->Ln(5);
 
     $pdf->SetFont('Arial', '', 8);

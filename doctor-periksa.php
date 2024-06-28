@@ -38,7 +38,7 @@ if ($rekamMedisResult->num_rows > 0) {
         // Update rekam medis
         $updateQuery = "
             UPDATE rekam_medis 
-            SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?
+            SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?, status_pembayaran = 'belum lunas'
             WHERE id_antrian = ?";
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bind_param("ssssssi", $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
