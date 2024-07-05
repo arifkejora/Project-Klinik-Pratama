@@ -19,7 +19,6 @@ $rekamMedisStmt->execute();
 $rekamMedisResult = $rekamMedisStmt->get_result();
 
 if ($rekamMedisResult->num_rows > 0) {
-    // Jika sudah ada rekam medis, lakukan update atau insert rekam medis
     $row = $rekamMedisResult->fetch_assoc();
     $id_rekammedis = $row['id_rekam_medis'];
     $tekanan_darah = $row['tekanan_darah'];
@@ -48,12 +47,17 @@ if ($rekamMedisResult->num_rows > 0) {
         }
         $updateStmt->close();
 
-        // Insert prescriptions
+        // Insert prescriptions and update stock
         $resepObatQuery = "
             INSERT INTO resep_obat (id_rekammedis, id_obat, status) 
             VALUES (?, ?, 'Antrian')";
+        $updateStokQuery = "
+            UPDATE obat
+            SET stok = stok - 1
+            WHERE id_obat = ? AND stok > 0";
 
         $resepObatStmt = $conn->prepare($resepObatQuery);
+        $updateStokStmt = $conn->prepare($updateStokQuery);
 
         foreach ($resep_obat as $id_obat) {
             $id_obat = (int)trim($id_obat); // Ensure id_obat is an integer
@@ -63,9 +67,16 @@ if ($rekamMedisResult->num_rows > 0) {
                     echo "Error inserting obat: " . $resepObatStmt->error;
                     exit;
                 }
+                // Update stock
+                $updateStokStmt->bind_param("i", $id_obat);
+                if (!$updateStokStmt->execute()) {
+                    echo "Error updating stock: " . $updateStokStmt->error;
+                    exit;
+                }
             }
         }
         $resepObatStmt->close();
+        $updateStokStmt->close();
 
         // Update antrian status
         $updateAntrianQuery = "
@@ -84,12 +95,13 @@ if ($rekamMedisResult->num_rows > 0) {
         exit;
     }
 } else {
-    // Jika belum ada rekam medis, tampilkan pesan error
     die("Rekam medis untuk ID Antrian tidak ditemukan.");
 }
 
 $conn->close();
 ?>
+
+
 
 
 <!DOCTYPE html>

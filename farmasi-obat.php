@@ -17,10 +17,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Ambil data dari form
     $nama_obat = mysqli_real_escape_string($conn, $_POST['nama_obat']);
     $jenis_obat = mysqli_real_escape_string($conn, $_POST['jenis_obat']);
+    $stok = mysqli_real_escape_string($conn, $_POST['stok_obat']);
     $harga_obat = mysqli_real_escape_string($conn, $_POST['harga_obat']);
 
     // Query untuk insert ke tabel obat
-    $sql = "INSERT INTO obat (nama_obat, jenis_obat, harga_obat) VALUES ('$nama_obat', '$jenis_obat', '$harga_obat')";
+    $sql = "INSERT INTO obat (nama_obat, jenis_obat, stok, harga_obat) VALUES ('$nama_obat', '$jenis_obat', '$stok', '$harga_obat')";
 
     if (mysqli_query($conn, $sql)) {
         // Jika insert berhasil, set pesan sukses
@@ -33,11 +34,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Ambil data jenis obat
 $jenis_obat_options = [
-    "Analgesik", "Antibiotik", "Antasida", "Antidepresan", "Antijamur", "Antimalaria",
-    "Antipiretik", "Antiseptik", "Diuretik", "Hipnotik", "Imunomodulator", "Laksatif",
-    "Obat Jantung", "Obat Kanker", "Obat Tidur", "Psikotropika", "Vitamin dan Suplemen",
-    "Herbal", "Homeopati", "Lainnya"
+  "Tablet", "Kapsul", "Sirup", "Suntik", "Salep", "Gel", "Krim", "Patch", "Inhaler",
+  "Suppositoria", "Suspensi", "Larutan", "Tetes Mata", "Tetes Hidung", "Tetes Telinga",
+  "Emulsi", "Bubuk", "Granul", "Effervescent", "Lozenges", "Strip", "Plester", "Lainnya"
 ];
+
 
 $sql = "SELECT * FROM obat";
 $result = mysqli_query($conn, $sql);
@@ -163,11 +164,11 @@ $result = mysqli_query($conn, $sql);
                     </div>
               <?php endif; ?>
               <form class="row g-3" action="farmasi-obat.php" method="POST">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="inputNamaObat" class="form-label">Nama Obat</label>
                         <input type="text" class="form-control" id="inputNamaObat" name="nama_obat" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="inputJenisObat" class="form-label">Jenis Obat</label>
                         <select class="form-control" id="inputJenisObat" name="jenis_obat" required>
                             <option value="">Pilih Jenis Obat</option>
@@ -176,7 +177,11 @@ $result = mysqli_query($conn, $sql);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <label for="inputStokObat" class="form-label">Stok Obat</label>
+                        <input type="number" class="form-control" id="inputStokObat" name="stok_obat" required>
+                    </div>
+                    <div class="col-md-3">
                         <label for="inputHargaObat" class="form-label">Harga Obat</label>
                         <input type="text" class="form-control" id="inputHargaObat" name="harga_obat" required>
                     </div>
@@ -197,6 +202,7 @@ $result = mysqli_query($conn, $sql);
                         <tr>
                             <th scope="col">Nama Obat</th>
                             <th scope="col">Jenis Obat</th>
+                            <th scope="col">Stok</th>
                             <th scope="col">Harga</th>
                             <th scope="col">Aksi</th>
                         </tr>
@@ -208,6 +214,7 @@ $result = mysqli_query($conn, $sql);
                                 echo "<tr>";
                                 echo "<td>" . htmlspecialchars($row['nama_obat']) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['jenis_obat']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['stok']) . "</td>";
                                 echo "<td>" . htmlspecialchars($row['harga_obat']) . "</td>";
                                 echo "<td>
                                         <a href='edit_obat.php?id_obat=" . $row['id_obat'] . "' class='btn btn-primary'><i class='bi bi-pencil me-1'></i> Edit</a>
