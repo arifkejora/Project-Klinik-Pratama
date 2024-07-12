@@ -1,7 +1,7 @@
 <?php
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $message = $_POST['message'];
-    $token = 'UDwdcnrNsLqz7B@Ak77A'; // Ganti dengan token Anda
+    $token = 'MvRy76vjJe5HbuuVnj@F'; // Ganti dengan token Anda
 
     // Ambil nomor HP dari database
     include('db_connection.php'); // Pastikan file ini sudah benar

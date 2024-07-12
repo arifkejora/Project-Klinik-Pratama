@@ -249,12 +249,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <p>Biaya Dokter: Rp. <?php echo number_format($harga_perkunjungan, 0, ',', '.'); ?></p>
                 <p>Total Harga Obat: Rp. <?php echo number_format($total_obat, 0, ',', '.'); ?></p>
                 <p>Total Biaya: Rp. <?php echo number_format($total_biaya, 0, ',', '.'); ?></p>
-<form action="generate_receipt.php" method="POST" target="_blank">
+                <form action="admin_bayar.php" method="POST" target="_blank">
                                     <input type="hidden" name="id_rekam_medis" value="<?php echo $id_rekam_medis; ?>">
                                     <input type="hidden" name="total_biaya" value="<?php echo $total_biaya; ?>">
                                     <button type="submit" class="btn btn-success" name="process_payment">Bayar</button>
+                                </form> <br>
+                <form action="generate_receipt.php" method="POST" target="_blank">
+                                    <input type="hidden" name="id_rekam_medis" value="<?php echo $id_rekam_medis; ?>">
+                                    <input type="hidden" name="total_biaya" value="<?php echo $total_biaya; ?>">
                                     <a href="generate_receipt.php?id_rekam_medis=<?php echo $id_rekam_medis; ?>" class="btn btn-info" target="_blank">Cetak Pembayaran</a>
                                 </form>
+
               </div>
               <?php endif; ?>
             </div>

@@ -12,44 +12,52 @@ $id_patient = $_SESSION['login_id'];
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_schedule = $_POST['id_schedule'];
 
-    // Mengecek kuota
-    $sql_kuota = "SELECT kuota FROM jadwal_dokter WHERE id_jadwal = $id_schedule AND status = 'Aktif'";
-    $result_kuota = mysqli_query($conn, $sql_kuota);
-    if ($result_kuota && mysqli_num_rows($result_kuota) > 0) {
-        $row_kuota = mysqli_fetch_assoc($result_kuota);
-        $kuota = $row_kuota['kuota'];
+    // Mengecek apakah pasien sudah ada dalam antrian
+    $sql_check_antrian = "SELECT * FROM antrian WHERE id_jadwal = $id_schedule AND id_pasien = $id_patient";
+    $result_check_antrian = mysqli_query($conn, $sql_check_antrian);
 
-        if ($kuota > 0) {
-            // Kurangi kuota
-            $new_kuota = $kuota - 1;
-            $sql_update_kuota = "UPDATE jadwal_dokter SET kuota = $new_kuota WHERE id_jadwal = $id_schedule";
-            if (mysqli_query($conn, $sql_update_kuota)) {
-                // Mengambil nomor antrian terakhir
-                $sql_last_queue = "SELECT MAX(antrian) AS last_queue FROM antrian WHERE id_jadwal = $id_schedule";
-                $result_last_queue = mysqli_query($conn, $sql_last_queue);
-                $last_queue = 0;
-                if ($result_last_queue && mysqli_num_rows($result_last_queue) > 0) {
-                    $row_last_queue = mysqli_fetch_assoc($result_last_queue);
-                    $last_queue = $row_last_queue['last_queue'];
-                }
-                $new_queue = $last_queue + 1;
+    if (mysqli_num_rows($result_check_antrian) == 0) {
+        // Mengecek kuota
+        $sql_kuota = "SELECT kuota FROM jadwal_dokter WHERE id_jadwal = $id_schedule AND status = 'Aktif'";
+        $result_kuota = mysqli_query($conn, $sql_kuota);
+        if ($result_kuota && mysqli_num_rows($result_kuota) > 0) {
+            $row_kuota = mysqli_fetch_assoc($result_kuota);
+            $kuota = $row_kuota['kuota'];
 
-                // Memasukkan data ke tabel antrian
-                $sql_insert_antrian = "INSERT INTO antrian (id_jadwal, id_pasien, antrian, status_antrian, dtmcrt) 
-                                        VALUES ($id_schedule, $id_patient, $new_queue, 'Menunggu', now())";
-                if (mysqli_query($conn, $sql_insert_antrian)) {
-                    $success_message = "Kamu berhasil mengambil antrian.";
+            if ($kuota > 0) {
+                // Kurangi kuota
+                $new_kuota = $kuota - 1;
+                $sql_update_kuota = "UPDATE jadwal_dokter SET kuota = $new_kuota WHERE id_jadwal = $id_schedule";
+                if (mysqli_query($conn, $sql_update_kuota)) {
+                    // Mengambil nomor antrian terakhir
+                    $sql_last_queue = "SELECT MAX(antrian) AS last_queue FROM antrian WHERE id_jadwal = $id_schedule";
+                    $result_last_queue = mysqli_query($conn, $sql_last_queue);
+                    $last_queue = 0;
+                    if ($result_last_queue && mysqli_num_rows($result_last_queue) > 0) {
+                        $row_last_queue = mysqli_fetch_assoc($result_last_queue);
+                        $last_queue = $row_last_queue['last_queue'];
+                    }
+                    $new_queue = $last_queue + 1;
+
+                    // Memasukkan data ke tabel antrian
+                    $sql_insert_antrian = "INSERT INTO antrian (id_jadwal, id_pasien, antrian, status_antrian, dtmcrt) 
+                                            VALUES ($id_schedule, $id_patient, $new_queue, 'Menunggu', now())";
+                    if (mysqli_query($conn, $sql_insert_antrian)) {
+                        $success_message = "Kamu berhasil mengambil antrian.";
+                    } else {
+                        $error_message = "Gagal memasukkan data ke tabel antrian.";
+                    }
                 } else {
-                    $error_message = "Gagal memasukkan data ke tabel antrian.";
+                    $error_message = "Gagal memperbarui kuota.";
                 }
             } else {
-                $error_message = "Gagal memperbarui kuota.";
+                $error_message = "Kuota pemeriksaan ini sudah habis, silahkan kembali besok.";
             }
         } else {
-            $error_message = "Kuota pemeriksaan ini sudah habis, silahkan kembali besok.";
+            $error_message = "Jadwal tidak ditemukan atau tidak aktif.";
         }
     } else {
-        $error_message = "Jadwal tidak ditemukan atau tidak aktif.";
+        $error_message = "Kamu sudah terdaftar dalam antrian untuk jadwal ini.";
     }
 }
 
