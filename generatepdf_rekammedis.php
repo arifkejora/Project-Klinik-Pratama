@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 include('db_connection.php');
@@ -30,12 +31,12 @@ function generateMedicalRecordsPDF($conn) {
     $pdf->SetFont('Arial', '', 4);
     $pdf->SetFillColor(230, 230, 230);
     $pdf->Cell(10, 5, 'ID', 1, 0, 'C', true);
-    $pdf->Cell(50, 5, 'Keluhan', 1, 0, 'C', true);
-    $pdf->Cell(50, 5, 'Diagnosa', 1, 0, 'C', true);
-    $pdf->Cell(15, 5, 'Tekanan Darah', 1, 0, 'C', true);
-    $pdf->Cell(15, 5, 'Berat Badan', 1, 0, 'C', true);
-    $pdf->Cell(15, 5, 'Suhu Badan', 1, 0, 'C', true);
-    $pdf->Cell(0, 5, 'Hasil Pemeriksaan', 1, 0, 'C', true);
+    $pdf->Cell(90, 5, 'Keluhan', 1, 0, 'C', true);
+    $pdf->Cell(40, 5, 'Diagnosa', 1, 0, 'C', true);
+    $pdf->Cell(10, 5, 'TD', 1, 0, 'C', true);
+    $pdf->Cell(10, 5, 'BB', 1, 0, 'C', true);
+    $pdf->Cell(10, 5, 'SB', 1, 0, 'C', true);
+    $pdf->Cell(0, 5, 'Hasil', 1, 0, 'C', true);
     $pdf->Ln();
 
     $sql = "SELECT * FROM rekam_medis";
@@ -43,11 +44,11 @@ function generateMedicalRecordsPDF($conn) {
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $pdf->Cell(10, 5, $row['id_rekam_medis'], 1, 0, 'C');
-            $pdf->Cell(50, 5, $row['keluhan'], 1, 0, 'L');
-            $pdf->Cell(50, 5, $row['diagnosa'], 1, 0, 'L');
-            $pdf->Cell(15, 5, $row['tekanan_darah'], 1, 0, 'C');
-            $pdf->Cell(15, 5, $row['berat_badan'], 1, 0, 'C');
-            $pdf->Cell(15, 5, $row['suhu_badan'], 1, 0, 'C');
+            $pdf->Cell(90, 5, $row['keluhan'], 1, 0, 'L');
+            $pdf->Cell(40, 5, $row['diagnosa'], 1, 0, 'L');
+            $pdf->Cell(10, 5, $row['tekanan_darah'], 1, 0, 'C');
+            $pdf->Cell(10, 5, $row['berat_badan'], 1, 0, 'C');
+            $pdf->Cell(10, 5, $row['suhu_badan'], 1, 0, 'C');
             $pdf->Cell(0, 5, $row['hasil_pemeriksaan'], 1, 0, 'L');
             $pdf->Ln();
         }
