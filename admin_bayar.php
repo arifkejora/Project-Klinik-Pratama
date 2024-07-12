@@ -1,6 +1,6 @@
 <?php
 session_start();
-include('db_connection.php'); 
+include('db_connection.php');
 
 if (!isset($_SESSION['login_user'])) {
     header("location: pages-login.php");
@@ -8,46 +8,79 @@ if (!isset($_SESSION['login_user'])) {
 }
 
 $message = '';
+$total_obat = 0;
+$harga_perkunjungan = 0;
+$id_rekam_medis = '';
 
-// Proses generate bayar
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    if (isset($_POST['id_rekam_medis'])) {
-        $id_rekam_medis = $_POST['id_rekam_medis'];
+    if (isset($_POST['generate_payment'])) {
+        if (isset($_POST['id_rekam_medis'])) {
+            $id_rekam_medis = $_POST['id_rekam_medis'];
 
-        // Query untuk menghitung total biaya
-        $sql = "SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
-                FROM resep_obat
-                INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
-                INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
-                INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
-                INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
-                INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
-                WHERE resep_obat.id_rekammedis = $id_rekam_medis";
-        
-        $result = $conn->query($sql);
+            $sql = "SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
+                    FROM resep_obat
+                    INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
+                    INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
+                    INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
+                    INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
+                    INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
+                    WHERE resep_obat.id_rekammedis = $id_rekam_medis";
 
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            $total_obat = $row['total_obat'];
-            $harga_perkunjungan = $row['harga_perkunjungan'];
-            $total_biaya = $total_obat + $harga_perkunjungan;
+            $result = $conn->query($sql);
 
-            // Update status pembayaran menjadi 'Lunas'
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $total_obat = $row['total_obat'];
+                $harga_perkunjungan = $row['harga_perkunjungan'];
+                $total_biaya = $total_obat + $harga_perkunjungan;
+            } else {
+                $message = "Error: Tidak dapat menghitung total biaya.";
+            }
+        } else {
+            $message = "Error: Data tidak lengkap.";
+        }
+    }
+
+    if (isset($_POST['process_payment'])) {
+        if (isset($_POST['id_rekam_medis'])) {
+            $id_rekam_medis = $_POST['id_rekam_medis'];
+            $total_biaya = $_POST['total_biaya'];
+
+            // Update status_pembayaran to 'Lunas' and set pembayaran to total_biaya
             $update_sql = "UPDATE rekam_medis SET pembayaran = $total_biaya, status_pembayaran = 'Lunas' WHERE id_rekam_medis = $id_rekam_medis";
 
             if ($conn->query($update_sql) === TRUE) {
-                $message = "Pembayaran berhasil di-generate.";
+                $message = "Pembayaran berhasil.";
             } else {
                 $message = "Error: " . $conn->error;
             }
+
+            $sql = "SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
+                    FROM resep_obat
+                    INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
+                    INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
+                    INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
+                    INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
+                    INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
+                    WHERE resep_obat.id_rekammedis = $id_rekam_medis";
+
+            $result = $conn->query($sql);
+
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $total_obat = $row['total_obat'];
+                $harga_perkunjungan = $row['harga_perkunjungan'];
+                $total_biaya = $total_obat + $harga_perkunjungan;
+            } else {
+                $message = "Error: Tidak dapat mengambil rincian pembayaran setelah pembayaran diproses.";
+            }
         } else {
-            $message = "Error: Tidak dapat menghitung total biaya.";
+            $message = "Error: Data tidak lengkap.";
         }
-    } else {
-        $message = "Error: Data tidak lengkap.";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -151,6 +184,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <span>Rating</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_pasien.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Pasien</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_crm.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Broadcast</span>
+        </a>
+      </li>
     </ul>
   </aside>
 
@@ -181,42 +228,46 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   <select class="form-select" id="inputNoRekamMedis" name="id_rekam_medis" required>
                     <option selected disabled>-- Pilih No Rekam Medis --</option>
                     <?php
-                    $sql_rekam_medis = "SELECT * FROM rekam_medis WHERE status_pembayaran = 'Belum Lunas'";
+                    $sql_rekam_medis = "SELECT id_rekam_medis FROM rekam_medis WHERE status_pembayaran = 'Belum Lunas' ";
                     $result_rekam_medis = $conn->query($sql_rekam_medis);
-
                     if ($result_rekam_medis->num_rows > 0) {
                       while ($row_rekam_medis = $result_rekam_medis->fetch_assoc()) {
-                        echo "<option value='" . $row_rekam_medis['id_rekam_medis'] . "'>RM00" . $row_rekam_medis['id_rekam_medis'] . "</option>";
-                      }
+                        echo "<option value='" . $row_rekam_medis['id_rekam_medis'] . "'>RM00" . $row_rekam_medis['id_rekam_medis'] . "</option>";                      }
                     } else {
-                      echo "<option disabled>Tidak ada rekam medis dengan status pembayaran 'Belum Lunas'</option>";
+                      echo "<option value='' disabled>Tidak ada data</option>";
                     }
                     ?>
                   </select>
                 </div>
-
                 <div class="text-center">
-                  <button type="submit" class="btn btn-primary">Generate Bayar</button>
-                  <button type="reset" class="btn btn-secondary">Reset</button>
+                  <button type="submit" class="btn btn-primary" name="generate_payment">Generate Pembayaran</button>
                 </div>
               </form>
-
-                           <!-- Tampilkan total biaya jika sudah di-generate -->
-                           <?php if (!empty($total_biaya)): ?>
+              <?php if (isset($total_obat, $harga_perkunjungan, $total_biaya)): ?>
               <div class="mt-4">
-                <h5>Total Biaya: Rp <?php echo number_format($total_biaya, 0, ',', '.'); ?></h5>
+                <h5>Rincian Biaya:</h5>
+                <p>Biaya Dokter: Rp. <?php echo number_format($harga_perkunjungan, 0, ',', '.'); ?></p>
+                <p>Total Harga Obat: Rp. <?php echo number_format($total_obat, 0, ',', '.'); ?></p>
+                <p>Total Biaya: Rp. <?php echo number_format($total_biaya, 0, ',', '.'); ?></p>
+                <form action="admin_bayar.php" method="POST" target="_blank">
+                                    <input type="hidden" name="id_rekam_medis" value="<?php echo $id_rekam_medis; ?>">
+                                    <input type="hidden" name="total_biaya" value="<?php echo $total_biaya; ?>">
+                                    <button type="submit" class="btn btn-success" name="process_payment">Bayar</button>
+                                </form> <br>
+                <form action="generate_receipt.php" method="POST" target="_blank">
+                                    <input type="hidden" name="id_rekam_medis" value="<?php echo $id_rekam_medis; ?>">
+                                    <input type="hidden" name="total_biaya" value="<?php echo $total_biaya; ?>">
+                                    <a href="generate_receipt.php?id_rekam_medis=<?php echo $id_rekam_medis; ?>" class="btn btn-info" target="_blank">Cetak Pembayaran</a>
+                                </form>
+
               </div>
               <?php endif; ?>
             </div>
           </div>
-
-          </div>
-
-          
-
         </div>
       </div>
     </section>
+
   </main>
 
   <footer id="footer" class="footer">

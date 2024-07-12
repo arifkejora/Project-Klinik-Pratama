@@ -18,8 +18,11 @@ function generateRatingPDF($conn) {
     $pdf->MultiCell(0, 5, 'Jl. Protokol Tersono Rt. 01 Rw. 03 Garung Lor Tersono, Tersono, Garung Lor, Kec. Kaliwungu, Kabupaten Kudus, Jawa Tengah 59332 | Nomor Telepon: (0291) 430169', 0, 'C');
     $pdf->Ln(5);
 
+    $pdf->Line(10, $pdf->GetY(), 200, $pdf->GetY());
+    $pdf->Ln(5);
+
     $pdf->SetFont('Arial', 'B', 14);
-    $pdf->Cell(0, 10, 'Rekap Rating', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Laporan Rating', 0, 1, 'C');
     $pdf->Ln(5);
 
     $pdf->SetFont('Arial', '', 8);

@@ -12,60 +12,95 @@ if (!$id_antrian) {
     die("ID Antrian tidak ditemukan.");
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $keluhan = $_POST['keluhan'];
-    $diagnosa = $_POST['diagnosa'];
-    $tekanan_darah = $_POST['tekanan_darah'];
-    $berat_badan = $_POST['berat_badan'];
-    $suhu_badan = $_POST['suhu_badan'];
-    $hasil_pemeriksaan = $_POST['hasil_pemeriksaan'];
-    $resep_obat = explode(',', $_POST['resep_obat_ids']);
+$rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
+$rekamMedisStmt = $conn->prepare($rekamMedisQuery);
+$rekamMedisStmt->bind_param("i", $id_antrian);
+$rekamMedisStmt->execute();
+$rekamMedisResult = $rekamMedisStmt->get_result();
 
-    $rekamMedisQuery = "
-        INSERT INTO rekam_medis (id_antrian, keluhan, diagnosa, tekanan_darah, berat_badan, suhu_badan, hasil_pemeriksaan, status_pembayaran) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'Belum Lunas')";
-    $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
-    $rekamMedisStmt->bind_param("issssss", $id_antrian, $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan);
-    $rekamMedisStmt->execute();
-    $id_rekammedis = $rekamMedisStmt->insert_id;
-    $rekamMedisStmt->close();
+if ($rekamMedisResult->num_rows > 0) {
+    $row = $rekamMedisResult->fetch_assoc();
+    $id_rekammedis = $row['id_rekam_medis'];
+    $tekanan_darah = $row['tekanan_darah'];
+    $berat_badan = $row['berat_badan'];
+    $suhu_badan = $row['suhu_badan'];
 
-    $resepObatQuery = "
-    INSERT INTO resep_obat (id_rekammedis, id_obat, status) 
-    VALUES (?, ?, 'Antrian')";
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $keluhan = $_POST['keluhan'];
+        $diagnosa = $_POST['diagnosa'];
+        $tekanan_darah = $_POST['tekanan_darah'];
+        $berat_badan = $_POST['berat_badan'];
+        $suhu_badan = $_POST['suhu_badan'];
+        $hasil_pemeriksaan = $_POST['hasil_pemeriksaan'];
+        $resep_obat = explode(',', $_POST['resep_obat_ids']);
 
-    $resepObatStmt = $conn->prepare($resepObatQuery);
+        // Update rekam medis
+        $updateQuery = "
+            UPDATE rekam_medis 
+            SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?, status_pembayaran = 'belum lunas'
+            WHERE id_antrian = ?";
+        $updateStmt = $conn->prepare($updateQuery);
+        $updateStmt->bind_param("ssssssi", $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
+        if (!$updateStmt->execute()) {
+            echo "Error updating rekam medis: " . $updateStmt->error;
+            exit;
+        }
+        $updateStmt->close();
 
-    foreach ($resep_obat as $id_obat) {
-        $id_obat = (int)trim($id_obat); // Ensure the id_obat is an integer
-        if ($id_obat > 0) {
-            $resepObatStmt->bind_param("ii", $id_rekammedis, $id_obat);
-            if (!$resepObatStmt->execute()) {
-                echo "Error inserting obat: " . $resepObatStmt->error;
-                exit;
+        // Insert prescriptions and update stock
+        $resepObatQuery = "
+            INSERT INTO resep_obat (id_rekammedis, id_obat, status) 
+            VALUES (?, ?, 'Antrian')";
+        $updateStokQuery = "
+            UPDATE obat
+            SET stok = stok - 1
+            WHERE id_obat = ? AND stok > 0";
+
+        $resepObatStmt = $conn->prepare($resepObatQuery);
+        $updateStokStmt = $conn->prepare($updateStokQuery);
+
+        foreach ($resep_obat as $id_obat) {
+            $id_obat = (int)trim($id_obat); // Ensure id_obat is an integer
+            if ($id_obat > 0) {
+                $resepObatStmt->bind_param("ii", $id_rekammedis, $id_obat);
+                if (!$resepObatStmt->execute()) {
+                    echo "Error inserting obat: " . $resepObatStmt->error;
+                    exit;
+                }
+                // Update stock
+                $updateStokStmt->bind_param("i", $id_obat);
+                if (!$updateStokStmt->execute()) {
+                    echo "Error updating stock: " . $updateStokStmt->error;
+                    exit;
+                }
             }
         }
-    }
-    $resepObatStmt->close();
+        $resepObatStmt->close();
+        $updateStokStmt->close();
 
-    $updateAntrianQuery = "
-        UPDATE antrian 
-        SET status_antrian = 'Selesai Diperiksa' 
-        WHERE id_antrian = ?";
-    $updateAntrianStmt = $conn->prepare($updateAntrianQuery);
-    $updateAntrianStmt->bind_param("i", $id_antrian);
-    if (!$updateAntrianStmt->execute()) {
-        echo "Error updating antrian: " . $updateAntrianStmt->error;
+        // Update antrian status
+        $updateAntrianQuery = "
+            UPDATE antrian 
+            SET status_antrian = 'Selesai Diperiksa' 
+            WHERE id_antrian = ?";
+        $updateAntrianStmt = $conn->prepare($updateAntrianQuery);
+        $updateAntrianStmt->bind_param("i", $id_antrian);
+        if (!$updateAntrianStmt->execute()) {
+            echo "Error updating antrian: " . $updateAntrianStmt->error;
+            exit;
+        }
+        $updateAntrianStmt->close();
+
+        header("Location: doctor-patient.php");
         exit;
     }
-    $updateAntrianStmt->close();
-
-    header("Location: doctor-patient.php");
-    exit;
+} else {
+    die("Rekam medis untuk ID Antrian tidak ditemukan.");
 }
 
 $conn->close();
 ?>
+
 
 
 
@@ -98,15 +133,15 @@ $conn->close();
                     </div>
                     <div class="col-md-4">
                         <label for="inputTekananDarah" class="form-label">Tekanan Darah</label>
-                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" required>
+                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" value="<?php echo htmlspecialchars($tekanan_darah); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="inputBeratBadan" class="form-label">Berat Badan</label>
-                        <input type="text" class="form-control" id="inputBeratBadan" name="berat_badan" required>
+                        <input type="text" class="form-control" id="inputBeratBadan" name="berat_badan" value="<?php echo htmlspecialchars($berat_badan); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="inputSuhuBadan" class="form-label">Suhu Badan</label>
-                        <input type="text" class="form-control" id="inputSuhuBadan" name="suhu_badan" required>
+                        <input type="text" class="form-control" id="inputSuhuBadan" name="suhu_badan" value="<?php echo htmlspecialchars($suhu_badan); ?>" required>
                     </div>
                     <div class="col-md-12">
                         <label for="inputHasilPemeriksaan" class="form-label">Hasil Pemeriksaan</label>

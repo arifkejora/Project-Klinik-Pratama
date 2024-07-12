@@ -29,6 +29,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 
+$searchQuery = "";
+if (isset($_GET['search'])) {
+    $searchQuery = mysqli_real_escape_string($conn, $_GET['search']);
+    $sql = "SELECT id_farmasi, NIP, nama_farmasi, email_farmasi, mulai_bekerja 
+            FROM farmasi 
+            WHERE NIP LIKE '%$searchQuery%' 
+               OR nama_farmasi LIKE '%$searchQuery%'";
+} else 
+
 // View Data
 $sql = "SELECT id_farmasi, NIP, nama_farmasi, email_farmasi, mulai_bekerja FROM farmasi";
 $result = mysqli_query($conn, $sql);
@@ -138,6 +147,20 @@ $result = mysqli_query($conn, $sql);
           <span>Rating</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_pasien.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Pasien</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="admin_crm.php">
+          <i class="bi bi-bar-chart"></i>
+          <span>Broadcast</span>
+        </a>
+      </li>
     </ul>
   </aside>
 
@@ -195,6 +218,21 @@ $result = mysqli_query($conn, $sql);
 
             </div>
           </div>
+
+          <div class="card mt-5">
+            <div class="card-body">
+              <h5 class="card-title">Cari Anggota Farmasi</h5>
+              <form class="row g-3" method="GET" action="admin_farmasi.php">
+                <div class="col-md-12">
+                  <label for="searchQuery" class="form-label">Cari</label>
+                  <input type="text" class="form-control" id="searchQuery" name="search" placeholder="Cari berdasarkan NIP atau Nama">
+                </div>
+                <div class="text-center">
+                  <button type="submit" class="btn btn-primary">Cari</button>
+                </div>
+              </form>
+            </div>
+          </div>  
 
           <div class="card mt-5">
             <div class="card-body">

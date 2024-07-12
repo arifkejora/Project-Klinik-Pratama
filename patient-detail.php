@@ -25,7 +25,7 @@ if (isset($_GET['id_rekam_medis'])) {
         exit;
     }
 
-    $sql_resep = "SELECT ro.id_resep, ro.id_obat, o.nama_obat, ro.status, ro.aturan, ro.keterangan
+    $sql_resep = "SELECT ro.id_resep, ro.id_obat, o.nama_obat, ro.status, ro.aturan, ro.keterangan, o.jenis_obat
                   FROM resep_obat ro 
                   INNER JOIN obat o ON ro.id_obat = o.id_obat 
                   WHERE ro.id_rekammedis = ?";
@@ -168,15 +168,19 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                                     <?php foreach ($resep_obat as $obat): ?>
                                         <li>
                                             <div class="row g-3">
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <label for="inputObat_<?php echo $obat['id_resep']; ?>" class="form-label">Nama Obat</label>
                                                     <input type="text" class="form-control" id="inputObat_<?php echo $obat['id_resep']; ?>" name="nama_obat_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['nama_obat']); ?>" readonly>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
+                                                    <label for="inputJenisObat_<?php echo $obat['id_resep']; ?>" class="form-label">Jenis Obat</label>
+                                                    <input type="text" class="form-control" id="inputJenisObat_<?php echo $obat['id_resep']; ?>" name="jenis_obat_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['jenis_obat']); ?>" readonly>
+                                                </div>
+                                                <div class="col-md-3">
                                                     <label for="inputAturan_<?php echo $obat['id_resep']; ?>" class="form-label">Aturan</label>
                                                     <input type="text" class="form-control" id="inputAturan_<?php echo $obat['id_resep']; ?>" name="aturan_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['aturan']); ?>" readonly>
                                                 </div>
-                                                <div class="col-md-4">
+                                                <div class="col-md-3">
                                                     <label for="inputKeterangan_<?php echo $obat['id_resep']; ?>" class="form-label">Keterangan</label>
                                                     <input type="text" class="form-control" id="inputKeterangan_<?php echo $obat['id_resep']; ?>" name="keterangan_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['keterangan']); ?>" readonly>
                                                 </div>

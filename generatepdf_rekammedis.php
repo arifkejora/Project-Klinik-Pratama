@@ -1,3 +1,4 @@
+
 <?php
 session_start();
 include('db_connection.php');
@@ -24,7 +25,7 @@ function generateMedicalRecordsPDF($conn) {
     $pdf->Ln(5);
 
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Cell(0, 10, 'Rekap Rekam Medis', 0, 1, 'C');
+    $pdf->Cell(0, 10, 'Laporan Rekam Medis', 0, 1, 'C');
     $pdf->Ln(5);
 
     $pdf->SetFont('Arial', '', 4);

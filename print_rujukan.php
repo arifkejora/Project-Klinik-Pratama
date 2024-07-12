@@ -29,7 +29,7 @@ function convertToIndonesianDate($date) {
 // Ambil data pasien dari database
 $id_rujukan = $_GET['id_rujukan']; // Ambil id_rujukan dari URL
 $id_rekam_medis = $_GET['id_rekam_medis']; // Ambil id_rekam_medis dari URL
-$sql_rekam_medis = "SELECT rm.*, p.nama_pasien, p.email_pasien, p.nomorhp_pasien, dp.jenis_kelamin, dp.tanggal_lahir, dp.alamat_pasien, r.nama_rumahsakit, r.tanggal_rujukan
+$sql_rekam_medis = "SELECT rm.*, p.nama_pasien, p.email_pasien, p.nomorhp_pasien, dp.jenis_kelamin, dp.tanggal_lahir, dp.alamat_pasien, r.nama_rumahsakit, r.tanggal_rujukan, r.nama_dokter, r.poli
                     FROM rekam_medis rm
                     INNER JOIN antrian a ON rm.id_antrian = a.id_antrian
                     INNER JOIN pasien p ON a.id_pasien = p.id_pasien
@@ -42,6 +42,10 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
+    // Ambil nama dokter dan poli
+    $nama_dokter = $row['nama_dokter'];
+    $poli = $row['poli'];
+
     // Inisialisasi FPDF
     $pdf = new FPDF();
     $pdf->AddPage();
@@ -102,8 +106,12 @@ if ($row = $result->fetch_assoc()) {
     $pdf->Cell(40, 7, '         Diagnosa', 0, 0, 'L');
     $pdf->Cell(0, 7, ': ' . ($row['diagnosa'] ?? ''), 0, 1, 'L');
     
-
     $pdf->Ln(5);
+    
+    // Additional sentence
+    $pdf->MultiCell(0, 7, 'Mengingat kondisi pasien dan hasil pemeriksaan yang telah dilakukan, kami merujuk pasien ini untuk mendapatkan pemeriksaan dan penanganan lebih lanjut di ' . ($row['nama_rumahsakit'] ?? '') . ' di bawah pengawasan ' . ($nama_dokter ?? '') . ' yang menangani poli ' . ($poli ?? '') . '. Pasien dijadwalkan untuk konsultasi pada tanggal ' . convertToIndonesianDate($row['tanggal_rujukan'] ?? '') . '.', 0, 'J');
+    $pdf->Ln(5);
+
     // Penutup
     $pdf->MultiCell(0, 7, 'Demikian kami sampaikan, mohon konsultasi dan perawatan selanjutnya. Atas bantuannya dan kerjasama, kami ucapkan terima kasih.', 0, 'J');
     $pdf->Ln(10);
@@ -121,7 +129,6 @@ if ($row = $result->fetch_assoc()) {
 } else {
     echo "Data rekam medis tidak ditemukan.";
 }
-
 $stmt->close();
 $conn->close();
 

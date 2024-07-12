@@ -111,42 +111,42 @@ $total_patient = $row['total_patient'];
       <li class="nav-item">
         <a class="nav-link collapsed" href="pimpinan-doctor.php">
           <i class="bi bi-person-badge"></i>
-          <span>Rekap Doctor</span>
+          <span>Laporan Dokter</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pimpinan-farmasi.php">
           <i class="bi bi-hospital"></i>
-          <span>Rekap Farmasi</span>
+          <span>Laporan Farmasi</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link " href="pimpinan-pasien.php">
           <i class="bi bi-file-medical"></i>
-          <span>Rekap Pasien</span>
+          <span>Laporan Pasien</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pimpinan-obat.php">
           <i class="bi bi-capsule"></i>
-          <span>Rekap Obat</span>
+          <span>Laporan Obat</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pimpinan-rekammedis.php">
           <i class="bi bi-clipboard-data"></i>
-          <span>Rekap Rekam Medis</span>
+          <span>Laporan Rekam Medis</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="pimpinan-rating.php">
           <i class="bi bi-star"></i>
-          <span>Rekap Rating</span>
+          <span>Laporan Rating</span>
         </a>
       </li>
     </ul>
@@ -169,7 +169,7 @@ $total_patient = $row['total_patient'];
     <div class="col-lg-12">
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">Rekap Pasien</h5>
+          <h5 class="card-title">Laporan Pasien</h5>
           <table class="table table-bordered">
             <thead>
               <tr>

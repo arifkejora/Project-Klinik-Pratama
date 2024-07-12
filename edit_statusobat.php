@@ -54,15 +54,15 @@ if (isset($_GET['id_rekam_medis'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'proses_obat') {
     foreach ($resep_obat as $obat) {
         $id_resep = $obat['id_resep'];
-        $aturan = $_POST["aturan_$id_resep"];
-        $keterangan = $_POST["keterangan_$id_resep"];
+        $aturan = $_POST["aturan$id_resep"];
+        $keterangan = $_POST["keterangan$id_resep"];
 
         $sql_update = "UPDATE resep_obat SET aturan = ?, keterangan = ? WHERE id_resep = ?";
         $stmt_update = $conn->prepare($sql_update);
         $stmt_update->bind_param("ssi", $aturan, $keterangan, $id_resep);
         $stmt_update->execute();
     }
-
+    
     $sql_update_status = "UPDATE resep_obat SET status = 'Selesai' WHERE id_rekammedis = ?";
     $stmt_update_status = $conn->prepare($sql_update_status);
     $stmt_update_status->bind_param("i", $id);
