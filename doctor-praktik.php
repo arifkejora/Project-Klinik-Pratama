@@ -7,6 +7,21 @@ if (!isset($_SESSION['login_doctor'])) {
     exit;
 }
 
+function generateId($conn) {
+    $sql = "SELECT id_jadwal FROM jadwal_dokter ORDER BY id_jadwal DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_jadwal'];
+        $lastNumber = intval(substr($lastId, 3)); // Mengambil angka setelah 'JDW'
+        $newNumber = $lastNumber + 1;
+        return 'JDW' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'JDW01'; // ID pertama jika tabel kosong
+    }
+}
+
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -15,8 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $waktu_mulai = $_POST['time'];
     $kuota = $_POST['kuota'];
     $status = ($_POST['action'] === 'open') ? 'Aktif' : 'Tidak aktif';
-
+    
     if ($_POST['action'] === 'open') {
+        // Generate new ID
+        $newId = generateId($conn);
+
         // Check if the doctor has already opened practice today
         $checkQuery = "SELECT COUNT(*) AS count FROM jadwal_dokter WHERE id_dokter = ? AND tanggal = ?";
         $checkStmt = $conn->prepare($checkQuery);
@@ -31,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "Anda sudah buka praktik hari ini, silahkan buka praktik kembali besok.";
             } else {
                 // Insert into jadwal_dokter
-                $query = "INSERT INTO jadwal_dokter (id_dokter, tanggal, waktu_mulai, waktu_selesai, kuota, status) VALUES (?, ?, ?, NULL, ?, ?)";
+                $query = "INSERT INTO jadwal_dokter (id_jadwal, id_dokter, tanggal, waktu_mulai, waktu_selesai, kuota, status) VALUES (?, ?, ?, ?, NULL, ?, ?)";
                 $stmt = $conn->prepare($query);
                 if ($stmt) {
-                    $stmt->bind_param("issss", $id_dokter, $tanggal, $waktu_mulai, $kuota, $status);
+                    $stmt->bind_param("ssssss", $newId, $id_dokter, $tanggal, $waktu_mulai, $kuota, $status);
                     if ($stmt->execute()) {
                         $message = "Anda berhasil membuka praktik hari ini, semangat dokter.";
                     } else {
@@ -86,6 +104,7 @@ if ($historyStmt) {
 
 $conn->close();
 ?>
+
 
 
 

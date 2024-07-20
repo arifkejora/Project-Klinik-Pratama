@@ -7,6 +7,22 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
+function generateId($conn) {
+    $sql = "SELECT id_detail_pasien FROM detail_pasien ORDER BY id_detail_pasien DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_detail_pasien'];
+        $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
+        $newNumber = $lastNumber + 1;
+        return 'DPS' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'DPS01'; // First ID if the table is empty
+    }
+}
+
+
 // Load JSON data
 $provinsi_data = json_decode(file_get_contents('data/provinsi.json'), true);
 $kabupaten_data = json_decode(file_get_contents('data/kabupaten.json'), true);
@@ -49,6 +65,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $kecamatan_id = mysqli_real_escape_string($conn, $kecamatan_id);
     $desa_id = mysqli_real_escape_string($conn, $desa_id);
 
+    $newId = generateId($conn);
+
     // Check if the detail already exists for the patient
     $check_sql = "SELECT * FROM detail_pasien WHERE id_pasien = '$id_patient'";
     $check_result = mysqli_query($conn, $check_sql);
@@ -66,7 +84,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     } else {
         // Insert new detail
-        $insert_sql = "INSERT INTO detail_pasien (id_pasien, jenis_kelamin, tanggal_lahir, alamat_pasien, provinsi, kabupaten, kecamatan, desa) VALUES ('$id_patient', '$gender', '$birth_date', '$address', '$provinsi_id', '$kabupaten_id', '$kecamatan_id', '$desa_id')";
+        $insert_sql = "INSERT INTO detail_pasien (id_detail_pasien, id_pasien, jenis_kelamin, tanggal_lahir, alamat_pasien, provinsi, kabupaten, kecamatan, desa) VALUES ('$newId', '$id_patient', '$gender', '$birth_date', '$address', '$provinsi_id', '$kabupaten_id', '$kecamatan_id', '$desa_id')";
         $insert_result = mysqli_query($conn, $insert_sql);
         
         if ($insert_result) {

@@ -7,6 +7,23 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
+function generateId($conn) {
+  $sql = "SELECT id_dokter FROM dokter ORDER BY id_dokter DESC LIMIT 1";
+  $result = $conn->query($sql);
+
+  if ($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      $lastId = $row['id_dokter'];
+      $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
+      $newNumber = $lastNumber + 1;
+      return 'DKT' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+  } else {
+      return 'DKT01'; // First ID if the table is empty
+  }
+}
+
+
+
 // Insert Data
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $nip = mysqli_real_escape_string($conn, $_POST['nip']);
@@ -17,12 +34,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $address = mysqli_real_escape_string($conn, $_POST['address']);
   $startdate = mysqli_real_escape_string($conn, $_POST['startdate']);
   $price = mysqli_real_escape_string($conn, $_POST['price']);
-
+  $newId = generateId($conn);
   // Hashing the password
   $password = md5($password);
 
-  $sql = "INSERT INTO dokter(nip, nama_dokter, mulai_bekerja, email_dokter, katasandi_dokter, alamat_dokter, spesialis, harga_perkunjungan) 
-          VALUES ('$nip', '$name', '$startdate', '$email', '$password', '$address', '$specialist', '$price')";
+  $sql = "INSERT INTO dokter(id_dokter, nip, nama_dokter, mulai_bekerja, email_dokter, katasandi_dokter, alamat_dokter, spesialis, harga_perkunjungan) 
+          VALUES ('$newId','$nip', '$name', '$startdate', '$email', '$password', '$address', '$specialist', '$price')";
 
   if (mysqli_query($conn, $sql)) {
       $message = "Data berhasil disimpan!";

@@ -3,13 +3,28 @@ session_start();
 include('db_connection.php');
 
 if (!isset($_SESSION['login_doctor'])) {
-    header("location: pages-login-doctor.php");
+    header("Location: pages-login-doctor.php");
     exit;
 }
 
 $id_antrian = isset($_GET['id_antrian']) ? $_GET['id_antrian'] : null;
 if (!$id_antrian) {
     die("ID Antrian tidak ditemukan.");
+}
+
+function generateId($conn) {
+    $sql = "SELECT id_resep FROM resep_obat ORDER BY id_resep DESC LIMIT 1";
+    $result = $conn->query($sql);
+  
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_resep'];
+        $lastNumber = intval(substr($lastId, 3)); // Get numbers after 'RSP'
+        $newNumber = $lastNumber + 1;
+        return 'RSP' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'RSP01'; // First ID if the table is empty
+    }
 }
 
 $rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
@@ -29,12 +44,13 @@ if ($rekamMedisResult->num_rows > 0) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $keluhan = $_POST['keluhan'];
         $diagnosa = $_POST['diagnosa'];
-        $tekanan_darah_S = $_POST['tekanan_darah_s'];
-        $tekanan_darah_D = $_POST['tekanan_darah_d'];
+        $tekanan_darah_s = $_POST['tekanan_darah_s'];
+        $tekanan_darah_d = $_POST['tekanan_darah_d'];
         $berat_badan = $_POST['berat_badan'];
         $suhu_badan = $_POST['suhu_badan'];
         $hasil_pemeriksaan = $_POST['hasil_pemeriksaan'];
-        $resep_obat = explode(',', $_POST['resep_obat_ids']);
+        $resep_obat_ids = isset($_POST['resep_obat_ids']) ? explode(',', $_POST['resep_obat_ids']) : [];
+        $newId = generateId($conn);
 
         // Update rekam medis
         $updateQuery = "
@@ -44,15 +60,15 @@ if ($rekamMedisResult->num_rows > 0) {
         $updateStmt = $conn->prepare($updateQuery);
         $updateStmt->bind_param("sssssssi", $keluhan, $diagnosa, $tekanan_darah_s, $tekanan_darah_d, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
         if (!$updateStmt->execute()) {
-            echo "Error updating rekam medis: " . $updateStmt->error;
+            error_log("Error updating rekam medis: " . $updateStmt->error);
             exit;
         }
         $updateStmt->close();
 
-        // Insert prescriptions and update stock
+        // Prepare statements for inserting prescriptions and updating stock
         $resepObatQuery = "
-            INSERT INTO resep_obat (id_rekammedis, id_obat, status) 
-            VALUES (?, ?, 'Antrian')";
+            INSERT INTO resep_obat (id_resep, id_rekammedis, id_obat, status) 
+            VALUES (?, ?, ?, 'Antrian')";
         $updateStokQuery = "
             UPDATE obat
             SET stok = stok - 1
@@ -61,22 +77,37 @@ if ($rekamMedisResult->num_rows > 0) {
         $resepObatStmt = $conn->prepare($resepObatQuery);
         $updateStokStmt = $conn->prepare($updateStokQuery);
 
-        foreach ($resep_obat as $id_obat) {
-            $id_obat = (int)trim($id_obat); // Ensure id_obat is an integer
-            if ($id_obat > 0) {
-                $resepObatStmt->bind_param("ii", $id_rekammedis, $id_obat);
-                if (!$resepObatStmt->execute()) {
-                    echo "Error inserting obat: " . $resepObatStmt->error;
-                    exit;
-                }
-                // Update stock
-                $updateStokStmt->bind_param("i", $id_obat);
-                if (!$updateStokStmt->execute()) {
-                    echo "Error updating stock: " . $updateStokStmt->error;
-                    exit;
+        if (!$resepObatStmt || !$updateStokStmt) {
+            error_log("Error preparing statements: " . $conn->error);
+            exit;
+        }
+
+        // Ensure proper handling of SQL errors
+        $conn->autocommit(FALSE);
+        try {
+            foreach ($resep_obat_ids as $id_obat) {
+                $id_obat = (int)trim($id_obat); // Ensure id_obat is an integer
+                if ($id_obat > 0) {
+                    // Insert into resep_obat
+                    $resepObatStmt->bind_param("iii", $newId, $id_rekammedis, $id_obat);
+                    if (!$resepObatStmt->execute()) {
+                        throw new Exception("Error inserting into resep_obat: " . $resepObatStmt->error);
+                    }
+
+                    // Update stock
+                    $updateStokStmt->bind_param("i", $id_obat);
+                    if (!$updateStokStmt->execute()) {
+                        throw new Exception("Error updating stock: " . $updateStokStmt->error);
+                    }
                 }
             }
+            $conn->commit();
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log($e->getMessage());
+            exit;
         }
+
         $resepObatStmt->close();
         $updateStokStmt->close();
 
@@ -88,7 +119,7 @@ if ($rekamMedisResult->num_rows > 0) {
         $updateAntrianStmt = $conn->prepare($updateAntrianQuery);
         $updateAntrianStmt->bind_param("i", $id_antrian);
         if (!$updateAntrianStmt->execute()) {
-            echo "Error updating antrian: " . $updateAntrianStmt->error;
+            error_log("Error updating antrian: " . $updateAntrianStmt->error);
             exit;
         }
         $updateAntrianStmt->close();
@@ -102,8 +133,6 @@ if ($rekamMedisResult->num_rows > 0) {
 
 $conn->close();
 ?>
-
-
 
 
 <!DOCTYPE html>
@@ -155,73 +184,85 @@ $conn->close();
                     </div>
                     <div class="col-md-12">
                         <label for="inputResep" class="form-label">Resep Obat</label>
-                        <textarea class="form-control" id="inputResep" name="resep_obat" rows="3" required></textarea>
+                        <input type="text" class="form-control" id="inputResep" name="resep_obat" placeholder="Ketikan nama obat..." required>
                         <input type="hidden" id="inputResepIds" name="resep_obat_ids">
                     </div>
-                    <div class="col-12 text-center">
-                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                        <a href="admin_dokter.php" class="btn btn-secondary">Batal</a>
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
     <script>
-$(function() {
-    function split(val) {
-        return val.split(/,\s*/);
-    }
-
-    function extractLast(term) {
-        return split(term).pop();
-    }
-
-    $("#inputResep").on("keydown", function(event) {
-        if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
-            event.preventDefault();
+    $(function() {
+        function split(val) {
+            return val.split(/,\s*/);
         }
-    }).autocomplete({
-        source: function(request, response) {
-            $.getJSON("get-obat.php", {
-                term: extractLast(request.term)
-            }, response);
-        },
-        search: function() {
-            var term = extractLast(this.value);
-            if (term.length < 2) {
+
+        function extractLast(term) {
+            return split(term).pop();
+        }
+
+        $("#inputResep").on("keydown", function(event) {
+            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
+                event.preventDefault();
+            }
+        }).autocomplete({
+            source: function(request, response) {
+                $.getJSON("get-obat.php", {
+                    term: extractLast(request.term)
+                }, response);
+            },
+            search: function() {
+                var term = extractLast(this.value);
+                if (term.length < 2) {
+                    return false;
+                }
+            },
+            focus: function() {
+                return false;
+            },
+            select: function(event, ui) {
+                var terms = split(this.value);
+                var termsIds = $("#inputResepIds").val().split(/,\s*/);
+
+                terms.pop();
+                terms.push(ui.item.value); 
+                terms.push("");
+
+                termsIds.pop();
+                termsIds.push(ui.item.id);
+                termsIds.push("");
+
+                this.value = terms.join(", ");
+                $("#inputResepIds").val(termsIds.join(", "));
+
                 return false;
             }
-        },
-        focus: function() {
-            return false;
-        },
-        select: function(event, ui) {
-            var terms = split(this.value);
-            var termsIds = $("#inputResepIds").val().split(/,\s*/);
+        });
 
-            terms.pop();
-            terms.push(ui.item.value); 
-            terms.push("");
+        $(function() {
+            $("form").submit(function(event) {
+                var inputResepIds = $("#inputResepIds");
+                console.log('inputResepIds:', inputResepIds); // Check if the element is found
+                console.log('inputResepIds value before filter:', inputResepIds.val()); // Check the value before processing
 
-            termsIds.pop();
-            termsIds.push(ui.item.id);
-            termsIds.push("");
+                if (inputResepIds.length) {
+                    var termsIds = inputResepIds.val().split(/,\s*/);
+                    inputResepIds.val(termsIds.filter(id => id !== ""));
+                    console.log('inputResepIds value after filter:', inputResepIds.val()); // Check the value after processing
+                } else {
+                    console.error('Element #inputResepIds not found.');
+                }
 
-            this.value = terms.join(", ");
-            $("#inputResepIds").val(termsIds.join(", "));
+                return true; // Ensure the form submission proceeds
+            });
+        });
 
-            return false;
-        }
+
     });
-
-    $("form").submit(function(event) {
-        var termsIds = $("#inputResepIds").val().split(/,\s*/);
-        $("#inputResepIds").val(termsIds.filter(id => id !== ""));
-        return true;
-    });
-});
-
     </script>
 </body>
 </html>

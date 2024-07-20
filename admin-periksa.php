@@ -12,17 +12,33 @@ if (!$id_antrian) {
     die("ID Antrian tidak ditemukan.");
 }
 
+function generateId($conn) {
+    $sql = "SELECT id_rekam_medis FROM rekam_medis ORDER BY id_rekam_medis DESC LIMIT 1";
+    $result = $conn->query($sql);
+  
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_rekam_medis'];
+        $lastNumber = intval(substr($lastId, 2)); // Changed to get numbers after 'RM'
+        $newNumber = $lastNumber + 1;
+        return 'RM' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'RM01'; // First ID if the table is empty
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tekanan_darah_s = $_POST['tekanan_darah_s'];
     $tekanan_darah_d = $_POST['tekanan_darah_d'];
     $berat_badan = $_POST['berat_badan'];
     $suhu_badan = $_POST['suhu_badan'];
-
+    $newId = generateId($conn);
+    
     $rekamMedisQuery = "
-        INSERT INTO rekam_medis (id_antrian, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan) 
-        VALUES (?, ?, ?, ?, ?)";
+        INSERT INTO rekam_medis (id_rekam_medis, id_antrian, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan) 
+        VALUES (?, ?, ?, ?, ?, ?)";
     $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
-    $rekamMedisStmt->bind_param("issss", $id_antrian, $tekanan_darah_s, $tekanan_darah_d, $berat_badan, $suhu_badan);
+    $rekamMedisStmt->bind_param("ssssss", $newId, $id_antrian, $tekanan_darah_s, $tekanan_darah_d, $berat_badan, $suhu_badan);
     $rekamMedisStmt->execute();
     $id_rekammedis = $rekamMedisStmt->insert_id;
     $rekamMedisStmt->close();
@@ -33,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

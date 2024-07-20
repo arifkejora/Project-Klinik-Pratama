@@ -2,6 +2,22 @@
 session_start();
 include('db_connection.php'); // Ensure this file contains the correct DB connection details
 
+// Function to generate the ID
+function generateId($conn) {
+    $sql = "SELECT id_pasien FROM pasien ORDER BY id_pasien DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_pasien'];
+        $lastNumber = intval(substr($lastId, 2));
+        $newNumber = $lastNumber + 1;
+        return 'PS' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'PS01'; // First ID if the table is empty
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST['name'];
     $email = $_POST['email'];
@@ -22,8 +38,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Hashing the password with MD5
     $hashed_password = md5($password);
 
+    // Generate new ID
+    $newId = generateId($conn);
+
     // Insert into the database
-    $sql = "INSERT INTO pasien (nama_pasien, email_pasien, nomorhp_pasien, katasandi_pasien) VALUES ('$name', '$email', '$number', '$hashed_password')";
+    $sql = "INSERT INTO pasien (id_pasien, nama_pasien, email_pasien, nomorhp_pasien, katasandi_pasien) VALUES ('$newId', '$name', '$email', '$number', '$hashed_password')";
 
     if (mysqli_query($conn, $sql)) {
         header("location: pages-login-patient.php"); // Redirect to login page

@@ -9,40 +9,65 @@ if (!isset($_SESSION['login_user'])) {
 
 $id_patient = $_SESSION['login_id'];
 
+function generateId($conn) {
+    $sql = "SELECT id_antrian FROM antrian ORDER BY id_antrian DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_antrian'];
+        $lastNumber = intval(substr($lastId, 3)); // Extract number after 'ANT'
+        $newNumber = $lastNumber + 1;
+        return 'ANT' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'ANT01'; // First ID if table is empty
+    }
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $id_schedule = $_POST['id_schedule'];
 
-    // Mengecek apakah pasien sudah ada dalam antrian
-    $sql_check_antrian = "SELECT * FROM antrian WHERE id_jadwal = $id_schedule AND id_pasien = $id_patient";
-    $result_check_antrian = mysqli_query($conn, $sql_check_antrian);
+    // Check if patient is already in the queue
+    $stmt_check_antrian = $conn->prepare("SELECT * FROM antrian WHERE id_jadwal = ? AND id_pasien = ?");
+    $stmt_check_antrian->bind_param("ss", $id_schedule, $id_patient);
+    $stmt_check_antrian->execute();
+    $result_check_antrian = $stmt_check_antrian->get_result();
 
-    if (mysqli_num_rows($result_check_antrian) == 0) {
-        // Mengecek kuota
-        $sql_kuota = "SELECT kuota FROM jadwal_dokter WHERE id_jadwal = $id_schedule AND status = 'Aktif'";
-        $result_kuota = mysqli_query($conn, $sql_kuota);
-        if ($result_kuota && mysqli_num_rows($result_kuota) > 0) {
-            $row_kuota = mysqli_fetch_assoc($result_kuota);
+    if ($result_check_antrian->num_rows == 0) {
+        // Check quota
+        $stmt_kuota = $conn->prepare("SELECT kuota FROM jadwal_dokter WHERE id_jadwal = ? AND status = 'Aktif'");
+        $stmt_kuota->bind_param("s", $id_schedule);
+        $stmt_kuota->execute();
+        $result_kuota = $stmt_kuota->get_result();
+
+        if ($result_kuota && $result_kuota->num_rows > 0) {
+            $row_kuota = $result_kuota->fetch_assoc();
             $kuota = $row_kuota['kuota'];
 
             if ($kuota > 0) {
-                // Kurangi kuota
+                // Reduce quota
+                $newId = generateId($conn);
                 $new_kuota = $kuota - 1;
-                $sql_update_kuota = "UPDATE jadwal_dokter SET kuota = $new_kuota WHERE id_jadwal = $id_schedule";
-                if (mysqli_query($conn, $sql_update_kuota)) {
-                    // Mengambil nomor antrian terakhir
-                    $sql_last_queue = "SELECT MAX(antrian) AS last_queue FROM antrian WHERE id_jadwal = $id_schedule";
-                    $result_last_queue = mysqli_query($conn, $sql_last_queue);
+                $stmt_update_kuota = $conn->prepare("UPDATE jadwal_dokter SET kuota = ? WHERE id_jadwal = ?");
+                $stmt_update_kuota->bind_param("is", $new_kuota, $id_schedule);
+                if ($stmt_update_kuota->execute()) {
+                    // Get last queue number
+                    $stmt_last_queue = $conn->prepare("SELECT MAX(antrian) AS last_queue FROM antrian WHERE id_jadwal = ?");
+                    $stmt_last_queue->bind_param("s", $id_schedule);
+                    $stmt_last_queue->execute();
+                    $result_last_queue = $stmt_last_queue->get_result();
                     $last_queue = 0;
-                    if ($result_last_queue && mysqli_num_rows($result_last_queue) > 0) {
-                        $row_last_queue = mysqli_fetch_assoc($result_last_queue);
+                    if ($result_last_queue && $result_last_queue->num_rows > 0) {
+                        $row_last_queue = $result_last_queue->fetch_assoc();
                         $last_queue = $row_last_queue['last_queue'];
                     }
                     $new_queue = $last_queue + 1;
 
-                    // Memasukkan data ke tabel antrian
-                    $sql_insert_antrian = "INSERT INTO antrian (id_jadwal, id_pasien, antrian, status_antrian, dtmcrt) 
-                                            VALUES ($id_schedule, $id_patient, $new_queue, 'Menunggu', now())";
-                    if (mysqli_query($conn, $sql_insert_antrian)) {
+                    // Insert data into queue table
+                    $stmt_insert_antrian = $conn->prepare("INSERT INTO antrian (id_antrian, id_jadwal, id_pasien, antrian, status_antrian, dtmcrt) VALUES (?, ?, ?, ?, 'Menunggu', NOW())");
+                    $stmt_insert_antrian->bind_param("sssi", $newId, $id_schedule, $id_patient, $new_queue);
+
+                    if ($stmt_insert_antrian->execute()) {
                         $success_message = "Kamu berhasil mengambil antrian.";
                     } else {
                         $error_message = "Gagal memasukkan data ke tabel antrian.";
@@ -61,16 +86,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// Mengambil data riwayat antrian pasien
-$sql_history = "SELECT a.antrian, d.nama_dokter, jd.waktu_mulai, jd.waktu_selesai, a.status_antrian, a.dtmcrt, rm.id_rekam_medis, rm.pembayaran, rm.status_pembayaran
-FROM antrian a
-JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
-JOIN dokter d ON jd.id_dokter = d.id_dokter
-LEFT JOIN rekam_medis rm ON a.id_antrian = rm.id_antrian
-WHERE a.id_pasien = $id_patient;
-";
-$result_history = mysqli_query($conn, $sql_history);
+// Fetch patient queue history
+$stmt_history = $conn->prepare("
+    SELECT a.antrian, d.nama_dokter, jd.waktu_mulai, jd.waktu_selesai, a.status_antrian, a.dtmcrt, rm.id_rekam_medis, rm.pembayaran, rm.status_pembayaran
+    FROM antrian a
+    JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+    JOIN dokter d ON jd.id_dokter = d.id_dokter
+    LEFT JOIN rekam_medis rm ON a.id_antrian = rm.id_antrian
+    WHERE a.id_pasien = ?
+");
+$stmt_history->bind_param("s", $id_patient);
+$stmt_history->execute();
+$result_history = $stmt_history->get_result();
 ?>
+
+
+
 
 
 <!DOCTYPE html>

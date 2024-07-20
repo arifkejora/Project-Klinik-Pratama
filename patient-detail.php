@@ -5,6 +5,22 @@ include('db_connection.php');
 $status_obat = '';
 $message = '';
 
+
+function generateId($conn) {
+    $sql = "SELECT id_detail_pasien FROM detail_pasien ORDER BY id_detail_pasien DESC LIMIT 1";
+    $result = $conn->query($sql);
+
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $lastId = $row['id_detail_pasien'];
+        $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
+        $newNumber = $lastNumber + 1;
+        return 'RAT' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+    } else {
+        return 'RAT01'; // First ID if the table is empty
+    }
+}
+
 if (isset($_GET['id_rekam_medis'])) {
     $id = $_GET['id_rekam_medis'];
 
@@ -55,19 +71,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $rating = $_POST['rating'];
     $ulasan = $_POST['ulasan'];
     $id_rekam_medis = $_POST['id_rekam_medis'];
+    $newId = generateId($conn);
     $role = $_POST['role'];
 
     $sql_insert_rating = "";
     if ($role == 'admin') {
-        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_admin, ulasan) VALUES (?, ?, ?)";
+        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_admin, ulasan) VALUES (?, ?, ?, ?)";
     } elseif ($role == 'dokter') {
-        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_dokter, ulasan) VALUES (?, ?, ?)";
+        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_dokter, ulasan) VALUES (?, ?, ?, ?)";
     } elseif ($role == 'farmasi') {
-        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_farmasi, ulasan) VALUES (?, ?, ?)";
+        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_farmasi, ulasan) VALUES (?, ?, ?, ?)";
     }
 
     $stmt_insert_rating = $conn->prepare($sql_insert_rating);
-    $stmt_insert_rating->bind_param("iis", $id_rekam_medis, $rating, $ulasan);
+    $stmt_insert_rating->bind_param("ssss", $newId, $id_rekam_medis, $rating, $ulasan);
 
     if ($stmt_insert_rating->execute()) {
         $message = "Rating and review submitted successfully.";
@@ -85,7 +102,6 @@ $ratings = [];
 while ($row_rating = $result_rating->fetch_assoc()) {
     $ratings[] = $row_rating;
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -96,10 +112,9 @@ while ($row_rating = $result_rating->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Pemeriksaan</title>
     <style>
-        /* CSS Anda di sini */
         .rating {
             display: flex;
-            flex-direction: row; /* Urutan bintang dari kiri ke kanan */
+            flex-direction: row;
         }
 
         .rating .star {
@@ -112,7 +127,7 @@ while ($row_rating = $result_rating->fetch_assoc()) {
         .rating .star:hover,
         .rating .star.active,
         .rating .star:hover ~ .star {
-            color: #FFD700; /* warna bintang saat dihover dan yang dipilih */
+            color: #FFD700;
         }
     </style>
 
@@ -198,120 +213,74 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                                     <?php endforeach; ?>
                                 </ol>
                             <?php else: ?>
-                                <p>Tidak ada resep obat.</p>
+                                <p>Tidak ada resep obat yang ditemukan.</p>
                             <?php endif; ?>
                         </div>
                     </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <a href="patient-checkup.php" class="btn btn-primary">
-                                Kembali
-                            </a>
-                        </div>
-                    </div>
                 </form>
-            </div>
-        </div>
-        <div class="card mt-5">
-                        <div class="card-header">
-                            <h5>Rating and Ulasan</h5>
+                <hr>
+                <h5>Rating dan Ulasan</h5>
+                <form action="" method="POST">
+                    <div class="form-group">
+                        <label for="role">Pilih Bagian</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">Pilih Bagian</option>
+                            <option value="admin">Admin</option>
+                            <option value="dokter">Dokter</option>
+                            <option value="farmasi">Farmasi</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="rating">Rating</label>
+                        <div class="rating">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <span class="star" data-value="<?php echo $i; ?>">&#9733;</span>
+                            <?php endfor; ?>
                         </div>
-                        <div class="card-body">
-                        <div class="row mt-3">
-                        <div class="col-md-12">
-                            <label for="rating" class="form-label"><strong>Beri Rating</strong></label>
-                            <div class="rating">
-                                <span class="star" data-value="1">&#9733;</span>
-                                <span class="star" data-value="2">&#9733;</span>
-                                <span class="star" data-value="3">&#9733;</span>
-                                <span class="star" data-value="4">&#9733;</span>
-                                <span class="star" data-value="5">&#9733;</span>
-                                <input type="hidden" name="rating" id="rating" value="0">
+                        <input type="hidden" id="rating" name="rating" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ulasan">Ulasan</label>
+                        <textarea class="form-control" id="ulasan" name="ulasan" rows="3" required></textarea>
+                    </div>
+                    <input type="hidden" name="id_rekam_medis" value="<?php echo $id; ?>">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+                <hr>
+                <h5>Ulasan dari Pengguna Lain</h5>
+                <?php if (!empty($ratings)): ?>
+                    <?php foreach ($ratings as $rating): ?>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <p><strong>Rating:</strong> <?php echo $rating['rate_admin'] ?? $rating['rate_dokter'] ?? $rating['rate_farmasi']; ?></p>
+                                <p><strong>Ulasan:</strong> <?php echo htmlspecialchars($rating['ulasan']); ?></p>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <label for="ulasan" class="form-label">Ulasan</label>
-                            <textarea class="form-control" id="ulasan" name="ulasan" rows="3" required></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <label><strong>Role:</strong></label><br>
-                            <input type="checkbox" name="role" value="admin"> Admin<br>
-                            <input type="checkbox" name="role" value="dokter"> Dokter<br>
-                            <input type="checkbox" name="role" value="farmasi"> Farmasi<br>
-                        </div>
-                    </div>
-
-                    <input type="hidden" name="id_rekam_medis" value="<?php echo $rekam_medis['id_rekam_medis']; ?>">
-
-                    <button type="submit" class="btn btn-primary mt-3">Submit</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <?php if (!empty($ratings)): ?>
-    <div class="row mt-5">
-        <div class="col-md-12">
-            <h5>Rating dan Ulasan</h5>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Rate Admin</th>
-                        <th>Rate Dokter</th>
-                        <th>Rate Farmasi</th>
-
-                        <th>Ulasan</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($ratings as $rating): ?>
-                        <tr>
-                            <td><?php echo $rating['rate_admin']; ?> Bintang</td>
-                            <td><?php echo $rating['rate_dokter']; ?> Bintang</td>
-
-                            <td><?php echo $rating['rate_farmasi']; ?> Bintang</td>
-
-                            <td><?php echo $rating['ulasan']; ?></td>
-                        </tr>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
+                <?php else: ?>
+                    <p>Belum ada ulasan.</p>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
-<?php endif; ?>
 
+    <script>
+        document.querySelectorAll('.star').forEach(function (star) {
+            star.addEventListener('click', function () {
+                let value = this.getAttribute('data-value');
+                document.getElementById('rating').value = value;
 
-                </tbody>
-            </table>
-        </div>
-                    </div>
-    </div>
-</body>
-<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const stars = document.querySelectorAll(".star");
-
-            stars.forEach(star => {
-                star.addEventListener("click", function() {
-                    const value = this.getAttribute("data-value");
-                    document.getElementById("rating").value = value;
-
-                    // Tambahkan class 'active' pada bintang yang dipilih dan bintang sebelumnya
-                    stars.forEach(s => {
-                        if (parseInt(s.getAttribute("data-value")) <= parseInt(value)) {
-                            s.classList.add("active");
-                        } else {
-                            s.classList.remove("active");
-                        }
-                    });
+                document.querySelectorAll('.star').forEach(function (s) {
+                    s.classList.remove('active');
                 });
+                this.classList.add('active');
+                this.previousElementSibling && this.previousElementSibling.classList.add('active');
+                while ((star = star.previousElementSibling)) {
+                    star.classList.add('active');
+                }
             });
         });
     </script>
+</body>
+
 </html>

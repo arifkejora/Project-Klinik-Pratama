@@ -7,6 +7,22 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
+function generateId($conn) {
+  $sql = "SELECT id_farmasi FROM farmasi ORDER BY id_farmasi DESC LIMIT 1";
+  $result = $conn->query($sql);
+
+  if ($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      $lastId = $row['id_farmasi'];
+      $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
+      $newNumber = $lastNumber + 1;
+      return 'FRM' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+  } else {
+      return 'FRM01'; // First ID if the table is empty
+  }
+}
+
+
 // Insert Data
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $nip = mysqli_real_escape_string($conn, $_POST['nip']);
@@ -15,12 +31,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $password = mysqli_real_escape_string($conn, $_POST['password']);
   $address = mysqli_real_escape_string($conn, $_POST['address']);
   $startdate = mysqli_real_escape_string($conn, $_POST['startdate']);
-
+  $newId = generateId($conn);
   // Hashing the password
   $password = md5($password);
 
-  $sql = "INSERT INTO farmasi (NIP, nama_farmasi, mulai_bekerja, email_farmasi, katasandi_farmasi, alamat_farmasi) 
-          VALUES ('$nip', '$name', '$startdate', '$email', '$password', '$address')";
+  $sql = "INSERT INTO farmasi (id_farmasi, NIP, nama_farmasi, mulai_bekerja, email_farmasi, katasandi_farmasi, alamat_farmasi) 
+          VALUES ('$newId','$nip', '$name', '$startdate', '$email', '$password', '$address')";
 
   if (mysqli_query($conn, $sql)) {
       $message = "Data berhasil disimpan!";

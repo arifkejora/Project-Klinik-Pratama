@@ -7,12 +7,27 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
+function generateId($conn) {
+  $sql = "SELECT id_rujukan FROM rujukan ORDER BY id_rujukan DESC LIMIT 1";
+  $result = $conn->query($sql);
+
+  if ($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      $lastId = $row['id_rujukan'];
+      $lastNumber = intval(substr($lastId, 3)); // Get numbers after 'RSP'
+      $newNumber = $lastNumber + 1;
+      return 'RSP' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+  } else {
+      return 'RSP01'; // First ID if the table is empty
+  }
+}
+
 $message = '';
 
 // Proses untuk menampilkan detail rekam medis setelah form dikirimkan
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
     $no_rekam_medis = $_POST['no_rekam_medis'];
-
+    $newId = generateId($conn);
     // Menghilangkan karakter "RM00" dari input nomor rekam medis
     $no_rekam_medis_clean = preg_replace('/^RM00/', '', $no_rekam_medis);
 
@@ -66,34 +81,34 @@ function hitungUmur($tanggal_lahir) {
 // Menghitung umur berdasarkan tanggal lahir, jika data tersedia
 $umur_pasien = isset($row['tanggal_lahir']) ? hitungUmur($row['tanggal_lahir']) : '';
 
-// Proses untuk menambah data rujukan setelah form ditampilkan
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah_rujukan'])) {
-    $no_rekam_medis = $_POST['id_rekam_medis'];
-    $nama_rumah_sakit = $_POST['nama_rumah_sakit_rujukan'];
-    $nama_dokter = $_POST['nama_dokter'];
-    $poli = $_POST['poli'];
-    $tanggal_rujukan = $_POST['tanggal_rujukan'];
+  $no_rekam_medis = $_POST['id_rekam_medis'];
+  $nama_rumah_sakit = $_POST['nama_rumah_sakit_rujukan'];
+  $nama_dokter = $_POST['nama_dokter'];
+  $poli = $_POST['poli'];
+  $tanggal_rujukan = $_POST['tanggal_rujukan'];
+  $newId = generateId($conn);
 
-    // Query untuk menyimpan data rujukan ke dalam tabel
-    $sql_insert = "INSERT INTO rujukan (id_rekammedis, nama_rumahsakit, nama_dokter, poli, tanggal_rujukan) 
-    VALUES (?, ?, ?, ?, ?)";
+  // Query untuk menyimpan data rujukan ke dalam tabel
+  $sql_insert = "INSERT INTO rujukan (id_rujukan, id_rekammedis, nama_rumahsakit, nama_dokter, poli, tanggal_rujukan) 
+  VALUES (?, ?, ?, ?, ?, ?)";
 
-$stmt_insert = $conn->prepare($sql_insert);
-$stmt_insert->bind_param("issss", $no_rekam_medis, $nama_rumah_sakit, $nama_dokter, $poli, $tanggal_rujukan);
+  $stmt_insert = $conn->prepare($sql_insert);
+  $stmt_insert->bind_param("ssssss", $newId, $no_rekam_medis, $nama_rumah_sakit, $nama_dokter, $poli, $tanggal_rujukan);
 
-
-    if ($stmt_insert->execute()) {
-        $stmt_insert->close();
-        $_SESSION['success_message'] = "Data rujukan berhasil ditambahkan.";
-        header("location: admin_rujukan.php");
-        exit;
-    } else {
-        $stmt_insert->close();
-        $_SESSION['error_message'] = "Terjadi kesalahan. Data rujukan gagal ditambahkan.";
-        header("location: admin_rujukan.php");
-        exit;
-    }
+  if ($stmt_insert->execute()) {
+      $stmt_insert->close();
+      $_SESSION['success_message'] = "Data rujukan berhasil ditambahkan.";
+      header("location: admin_rujukan.php");
+      exit;
+  } else {
+      $stmt_insert->close();
+      $_SESSION['error_message'] = "Terjadi kesalahan. Data rujukan gagal ditambahkan.";
+      header("location: admin_rujukan.php");
+      exit;
+  }
 }
+
 ?>
 
 <!DOCTYPE html>

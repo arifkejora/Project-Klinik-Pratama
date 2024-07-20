@@ -8,6 +8,22 @@ if (!isset($_SESSION['login_idfarmaddoc'])) {
     exit;
 }
 
+function generateId($conn) {
+  $sql = "SELECT id_obat FROM obat ORDER BY id_obat DESC LIMIT 1";
+  $result = $conn->query($sql);
+
+  if ($result->num_rows > 0) {
+      $row = $result->fetch_assoc();
+      $lastId = $row['id_obat'];
+      $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
+      $newNumber = $lastNumber + 1;
+      return 'OBT' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+  } else {
+      return 'OBT01'; // First ID if the table is empty
+  }
+}
+
+
 // Inisialisasi pesan sukses dan error
 $success_message = '';
 $error_message = '';
@@ -19,9 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $jenis_obat = mysqli_real_escape_string($conn, $_POST['jenis_obat']);
     $stok = mysqli_real_escape_string($conn, $_POST['stok_obat']);
     $harga_obat = mysqli_real_escape_string($conn, $_POST['harga_obat']);
-
+    $newId = generateId($conn);
     // Query untuk insert ke tabel obat
-    $sql = "INSERT INTO obat (nama_obat, jenis_obat, stok, harga_obat) VALUES ('$nama_obat', '$jenis_obat', '$stok', '$harga_obat')";
+    $sql = "INSERT INTO obat (id_obat, nama_obat, jenis_obat, stok, harga_obat) VALUES ('$newId','$nama_obat', '$jenis_obat', '$stok', '$harga_obat')";
 
     if (mysqli_query($conn, $sql)) {
         // Jika insert berhasil, set pesan sukses
