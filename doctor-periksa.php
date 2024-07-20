@@ -12,7 +12,7 @@ if (!$id_antrian) {
     die("ID Antrian tidak ditemukan.");
 }
 
-$rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
+$rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
 $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
 $rekamMedisStmt->bind_param("i", $id_antrian);
 $rekamMedisStmt->execute();
@@ -21,14 +21,16 @@ $rekamMedisResult = $rekamMedisStmt->get_result();
 if ($rekamMedisResult->num_rows > 0) {
     $row = $rekamMedisResult->fetch_assoc();
     $id_rekammedis = $row['id_rekam_medis'];
-    $tekanan_darah = $row['tekanan_darah'];
+    $tekanan_darah_s = $row['tekanan_darah_s'];
+    $tekanan_darah_d = $row['tekanan_darah_d'];
     $berat_badan = $row['berat_badan'];
     $suhu_badan = $row['suhu_badan'];
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $keluhan = $_POST['keluhan'];
         $diagnosa = $_POST['diagnosa'];
-        $tekanan_darah = $_POST['tekanan_darah'];
+        $tekanan_darah_S = $_POST['tekanan_darah_s'];
+        $tekanan_darah_D = $_POST['tekanan_darah_d'];
         $berat_badan = $_POST['berat_badan'];
         $suhu_badan = $_POST['suhu_badan'];
         $hasil_pemeriksaan = $_POST['hasil_pemeriksaan'];
@@ -37,10 +39,10 @@ if ($rekamMedisResult->num_rows > 0) {
         // Update rekam medis
         $updateQuery = "
             UPDATE rekam_medis 
-            SET keluhan = ?, diagnosa = ?, tekanan_darah = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?, status_pembayaran = 'belum lunas'
+            SET keluhan = ?, diagnosa = ?, tekanan_darah_s = ?, tekanan_darah_d = ?, berat_badan = ?, suhu_badan = ?, hasil_pemeriksaan = ?, status_pembayaran = 'belum lunas'
             WHERE id_antrian = ?";
         $updateStmt = $conn->prepare($updateQuery);
-        $updateStmt->bind_param("ssssssi", $keluhan, $diagnosa, $tekanan_darah, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
+        $updateStmt->bind_param("sssssssi", $keluhan, $diagnosa, $tekanan_darah_s, $tekanan_darah_d, $berat_badan, $suhu_badan, $hasil_pemeriksaan, $id_antrian);
         if (!$updateStmt->execute()) {
             echo "Error updating rekam medis: " . $updateStmt->error;
             exit;
@@ -131,9 +133,13 @@ $conn->close();
                         <label for="inputDiagnosa" class="form-label">Diagnosa</label>
                         <textarea class="form-control" id="inputDiagnosa" name="diagnosa" rows="3" required></textarea>
                     </div>
-                    <div class="col-md-4">
-                        <label for="inputTekananDarah" class="form-label">Tekanan Darah</label>
-                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" value="<?php echo htmlspecialchars($tekanan_darah); ?>" required>
+                    <div class="col-md-2">
+                        <label for="inputTekananDarahS" class="form-label">Tekanan Darah_S</label>
+                        <input type="text" class="form-control" id="inputTekananDarahS" name="tekanan_darah_s" value="<?php echo htmlspecialchars($tekanan_darah_s); ?>" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="inputTekananDarahD" class="form-label">Tekanan Darah_D</label>
+                        <input type="text" class="form-control" id="inputTekananDarahD" name="tekanan_darah_d" value="<?php echo htmlspecialchars($tekanan_darah_d); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="inputBeratBadan" class="form-label">Berat Badan</label>

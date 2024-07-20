@@ -177,7 +177,8 @@ $total_patient = $row['total_patient'];
                 <th scope="col">ID Antrian</th>
                 <th scope="col">Keluhan</th>
                 <th scope="col">Diagnosa</th>
-                <th scope="col">Tekanan Darah</th>
+                <th scope="col">Tekanan Darah S</th>
+                <th scope="col">Tekanan Darah D</th>
                 <th scope="col">Berat Badan</th>
                 <th scope="col">Suhu Badan</th>
                 <th scope="col">Hasil Pemeriksaan</th>
@@ -187,7 +188,7 @@ $total_patient = $row['total_patient'];
             </thead>
             <tbody>
               <?php
-              $sql = "SELECT id_rekam_medis, id_antrian, keluhan, diagnosa, tekanan_darah, berat_badan, suhu_badan, hasil_pemeriksaan, pembayaran, status_pembayaran FROM rekam_medis";
+              $sql = "SELECT id_rekam_medis, id_antrian, keluhan, diagnosa, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan, hasil_pemeriksaan, pembayaran, status_pembayaran FROM rekam_medis";
               $result = $conn->query($sql);
               if ($result->num_rows > 0):
                 while ($row = $result->fetch_assoc()): ?>
@@ -196,7 +197,8 @@ $total_patient = $row['total_patient'];
                     <td><?php echo $row['id_antrian']; ?></td>
                     <td><?php echo $row['keluhan']; ?></td>
                     <td><?php echo $row['diagnosa']; ?></td>
-                    <td><?php echo $row['tekanan_darah']; ?></td>
+                    <td><?php echo $row['tekanan_darah_s']; ?></td>
+                    <td><?php echo $row['tekanan_darah_d']; ?></td>
                     <td><?php echo $row['berat_badan']; ?></td>
                     <td><?php echo $row['suhu_badan']; ?></td>
                     <td><?php echo $row['hasil_pemeriksaan']; ?></td>

@@ -13,15 +13,16 @@ if (!$id_antrian) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tekanan_darah = $_POST['tekanan_darah'];
+    $tekanan_darah_s = $_POST['tekanan_darah_s'];
+    $tekanan_darah_d = $_POST['tekanan_darah_d'];
     $berat_badan = $_POST['berat_badan'];
     $suhu_badan = $_POST['suhu_badan'];
 
     $rekamMedisQuery = "
-        INSERT INTO rekam_medis (id_antrian, tekanan_darah, berat_badan, suhu_badan) 
-        VALUES (?, ?, ?, ?)";
+        INSERT INTO rekam_medis (id_antrian, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan) 
+        VALUES (?, ?, ?, ?, ?)";
     $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
-    $rekamMedisStmt->bind_param("isss", $id_antrian, $tekanan_darah, $berat_badan, $suhu_badan);
+    $rekamMedisStmt->bind_param("issss", $id_antrian, $tekanan_darah_s, $tekanan_darah_d, $berat_badan, $suhu_badan);
     $rekamMedisStmt->execute();
     $id_rekammedis = $rekamMedisStmt->insert_id;
     $rekamMedisStmt->close();
@@ -53,9 +54,13 @@ $conn->close();
             <div class="card-body">
                 <form class="row g-3" action="" method="POST">
                     
-                    <div class="col-md-4">
-                        <label for="inputTekananDarah" class="form-label">Tekanan Darah</label>
-                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" required>
+                    <div class="col-md-2">
+                        <label for="inputTekananDarahS" class="form-label">Tekanan Darah S</label>
+                        <input type="text" class="form-control" id="inputTekananDarahS" name="tekanan_darah_s" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="inputTekananDarahD" class="form-label">Tekanan Darah D</label>
+                        <input type="text" class="form-control" id="inputTekananDarahD" name="tekanan_darah_d" required>
                     </div>
                     <div class="col-md-4">
                         <label for="inputBeratBadan" class="form-label">Berat Badan</label>
