@@ -7,6 +7,7 @@ if (!isset($_SESSION['login_doctor'])) {
     exit;
 }
 
+// SQL Queries to get counts
 $sql = "SELECT COUNT(*) AS total_medicine FROM obat";
 $result = mysqli_query($conn, $sql);
 $row = mysqli_fetch_assoc($result);
@@ -27,8 +28,20 @@ $result = mysqli_query($conn, $sql);
 $row = mysqli_fetch_assoc($result);
 $total_patient = $row['total_patient'];
 
-?>
+// Calculate average rating
+$id_dokter = $_SESSION['login_iddoc'];
+$sql_avg_rating = "SELECT AVG(r.rate_dokter) as avg_rating 
+                   FROM rating r
+                   JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
+                   JOIN antrian a ON rm.id_antrian = a.id_antrian
+                   JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+                   JOIN dokter d ON jd.id_dokter = d.id_dokter
+                   WHERE d.id_dokter = $id_dokter";
+$result_avg_rating = mysqli_query($conn, $sql_avg_rating);
+$row_avg_rating = mysqli_fetch_assoc($result_avg_rating);
+$avg_rating = round($row_avg_rating['avg_rating'], 1);
 
+?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -158,7 +171,25 @@ $total_patient = $row['total_patient'];
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Daftar Rating & Ulasan</h5>
+                    <h5 class="card-title">Daftar Rating & Ulasan Dokter</h5>
+
+                    <div class="average-rating">
+                    <h1><?php echo $avg_rating; ?></h1>
+                    <p>
+                      <?php
+                      for ($i = 1; $i <= 5; $i++) {
+                        if ($i <= $avg_rating) {
+                          echo '<i class="bi bi-star-fill text-warning"></i>';
+                        } elseif ($i - 0.5 <= $avg_rating) {
+                          echo '<i class="bi bi-star-half text-warning"></i>';
+                        } else {
+                          echo '<i class="bi bi-star-fill text-secondary"></i>';
+                        }
+                      }
+                      ?>
+                    </p>
+                  </div>
+
                     <table class="table table-bordered">
                         <thead>
                             <tr>
@@ -173,7 +204,7 @@ $total_patient = $row['total_patient'];
 
                             // Query untuk mendapatkan semua data rating
                             $id_dokter = $_SESSION['login_iddoc'];
-                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rating, r.ulasan 
+                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rate_dokter, r.ulasan 
                                     FROM rating r
                                     JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
                                     JOIN antrian a ON rm.id_antrian = a.id_antrian
@@ -188,7 +219,7 @@ $total_patient = $row['total_patient'];
                                     echo "<tr>";
                                     echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
 
-                                    echo "<td>" . $rating['rating'] . " Bintang</td>";
+                                    echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
                                     echo "<td>" . $rating['ulasan'] . "</td>";
                                     echo "</tr>";
                                 }

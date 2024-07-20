@@ -1,6 +1,6 @@
 <?php
 session_start();
-include('db_connection.php'); 
+include('db_connection.php');
 
 if (!isset($_SESSION['login_user'])) {
     header("location: pages-login.php");
@@ -29,11 +29,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 
-// View Data
-$sql = "SELECT id_farmasi, NIP, nama_farmasi, email_farmasi, mulai_bekerja FROM farmasi";
-$result = mysqli_query($conn, $sql);
+// Calculate average rating and distribution
+$sql_avg = "SELECT AVG(rate_admin) as avg_rating FROM rating";
+$result_avg = mysqli_query($conn, $sql_avg);
+$avg_rating = 0;
+if ($result_avg && mysqli_num_rows($result_avg) > 0) {
+    $row_avg = mysqli_fetch_assoc($result_avg);
+    $avg_rating = round($row_avg['avg_rating'], 1);
+}
+
+$sql_dist = "SELECT rate_admin, COUNT(rate_admin) as count FROM rating GROUP BY rate_admin ORDER BY rate_admin DESC";
+$result_dist = mysqli_query($conn, $sql_dist);
+$rating_distribution = [];
+while ($row_dist = mysqli_fetch_assoc($result_dist)) {
+    $rating_distribution[$row_dist['rate_admin']] = $row_dist['count'];
+}
 
 ?>
+
 
 
 <!DOCTYPE html>
@@ -172,12 +185,36 @@ $result = mysqli_query($conn, $sql);
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Daftar Rating & Ulasan</h5>
+                    <h5 class="card-title">Rating Pelayanan Admin</h5>
+
+                    <div class="rating-box mb-4">
+                <div class="average-rating">
+                  <h1><?php echo $avg_rating; ?></h1>
+                  <p>
+                    <?php
+                    for ($i = 1; $i <= 5; $i++) {
+                      if ($i <= $avg_rating) {
+                        echo '<i class="bi bi-star-fill text-warning"></i>';
+                      } elseif ($i - 0.5 <= $avg_rating) {
+                        echo '<i class="bi bi-star-half text-warning"></i>';
+                      } else {
+                        echo '<i class="bi bi-star-fill text-secondary"></i>';
+                      }
+                    }
+                    ?>
+                  </p>
+                </div>
+                
+              </div>
+
+
                     <table class="table table-bordered">
                         <thead>
                             <tr>
                                 <th scope="col">Rekam Medis</th>
-                                <th scope="col">Rating</th>
+                                <th scope="col">Rating Admin</th>
+                                <th scope="col">Rating Dokter</th>
+                                <th scope="col">Rating Farmasi</th>
                                 <th scope="col">Ulasan</th>
                             </tr>
                         </thead>
@@ -185,8 +222,7 @@ $result = mysqli_query($conn, $sql);
                             <?php
                             include('db_connection.php');
 
-                            // Query untuk mendapatkan semua data rating
-                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rating, r.ulasan 
+                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rate_admin, r.rate_dokter, r.rate_farmasi, r.ulasan 
                                     FROM rating r";
                             $result = $conn->query($sql);
 
@@ -195,7 +231,9 @@ $result = mysqli_query($conn, $sql);
                                     echo "<tr>";
                                     echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
 
-                                    echo "<td>" . $rating['rating'] . " Bintang</td>";
+                                    echo "<td>" . $rating['rate_admin'] . " Bintang</td>";
+                                    echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
+                                    echo "<td>" . $rating['rate_farmasi'] . " Bintang</td>";
                                     echo "<td>" . $rating['ulasan'] . "</td>";
                                     echo "</tr>";
                                 }
@@ -203,7 +241,6 @@ $result = mysqli_query($conn, $sql);
                                 echo "<tr><td colspan='4' class='text-center'>Tidak ada data rating</td></tr>";
                             }
 
-                            // Menutup koneksi
                             $conn->close();
                             ?>
                         </tbody>

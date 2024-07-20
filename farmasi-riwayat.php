@@ -28,6 +28,12 @@ $sql = "SELECT jd.tanggal, p.nama_pasien, a.id_antrian, rm.id_rekam_medis, MIN(r
 
 $result = mysqli_query($conn, $sql);
 $queueData = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+$avg_sql = "SELECT AVG(rate_farmasi) AS avg_rating FROM rating";
+$avg_result = mysqli_query($conn, $avg_sql);
+$avg_row = mysqli_fetch_assoc($avg_result);
+$avg_rating = round($avg_row['avg_rating'], 1);
+
 ?>
 
 
@@ -134,6 +140,25 @@ $queueData = mysqli_fetch_all($result, MYSQLI_ASSOC);
         <div class="card">
             <div class="card-body">
             <h5 class="card-title">Antrian Obat Pasien Hari Ini</h5>
+
+            <div class="average-rating">
+                <h3>Rating</h3>
+                <h1><?php echo $avg_rating; ?></h1>
+                <p>
+                  <?php
+                  for ($i = 1; $i <= 5; $i++) {
+                    if ($i <= $avg_rating) {
+                      echo '<i class="bi bi-star-fill text-warning"></i>';
+                    } elseif ($i - 0.5 <= $avg_rating) {
+                      echo '<i class="bi bi-star-half text-warning"></i>';
+                    } else {
+                      echo '<i class="bi bi-star-fill text-secondary"></i>';
+                    }
+                  }
+                  ?>
+                </p>
+              </div>
+              
             <table class="table table-bordered">
             <thead>
                 <tr>

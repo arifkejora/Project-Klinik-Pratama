@@ -55,8 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $rating = $_POST['rating'];
     $ulasan = $_POST['ulasan'];
     $id_rekam_medis = $_POST['id_rekam_medis'];
+    $role = $_POST['role'];
 
-    $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rating, ulasan) VALUES (?, ?, ?)";
+    $sql_insert_rating = "";
+    if ($role == 'admin') {
+        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_admin, ulasan) VALUES (?, ?, ?)";
+    } elseif ($role == 'dokter') {
+        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_dokter, ulasan) VALUES (?, ?, ?)";
+    } elseif ($role == 'farmasi') {
+        $sql_insert_rating = "INSERT INTO rating (id_rekam_medis, rate_farmasi, ulasan) VALUES (?, ?, ?)";
+    }
+
     $stmt_insert_rating = $conn->prepare($sql_insert_rating);
     $stmt_insert_rating->bind_param("iis", $id_rekam_medis, $rating, $ulasan);
 
@@ -209,25 +218,39 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                             <h5>Rating and Ulasan</h5>
                         </div>
                         <div class="card-body">
-                            <form action="" method="POST">
-                                <input type="hidden" name="id_rekam_medis" value="<?php echo $id; ?>">
-                                <div class="form-group">
-                                    <label for="rating">Rating (1-5)</label>
-                                    <div class="rating">
-                                        <span class="star" data-value="1">&#9733;</span>
-                                        <span class="star" data-value="2">&#9733;</span>
-                                        <span class="star" data-value="3">&#9733;</span>
-                                        <span class="star" data-value="4">&#9733;</span>
-                                        <span class="star" data-value="5">&#9733;</span>
-                                        <input type="hidden" name="rating" id="rating" value="" required>
-                                    </div>
-                                </div>
+                        <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label for="rating" class="form-label"><strong>Beri Rating</strong></label>
+                            <div class="rating">
+                                <span class="star" data-value="1">&#9733;</span>
+                                <span class="star" data-value="2">&#9733;</span>
+                                <span class="star" data-value="3">&#9733;</span>
+                                <span class="star" data-value="4">&#9733;</span>
+                                <span class="star" data-value="5">&#9733;</span>
+                                <input type="hidden" name="rating" id="rating" value="0">
+                            </div>
+                        </div>
+                    </div>
 
-                                <div class="form-group mt-3">
-                                    <label for="ulasan">Ulasan</label>
-                                    <textarea name="ulasan" id="ulasan" rows="4" class="form-control" required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label for="ulasan" class="form-label">Ulasan</label>
+                            <textarea class="form-control" id="ulasan" name="ulasan" rows="3" required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label><strong>Role:</strong></label><br>
+                            <input type="checkbox" name="role" value="admin"> Admin<br>
+                            <input type="checkbox" name="role" value="dokter"> Dokter<br>
+                            <input type="checkbox" name="role" value="farmasi"> Farmasi<br>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="id_rekam_medis" value="<?php echo $rekam_medis['id_rekam_medis']; ?>">
+
+                    <button type="submit" class="btn btn-primary mt-3">Submit</button>
                             </form>
                         </div>
                     </div>
@@ -239,14 +262,21 @@ while ($row_rating = $result_rating->fetch_assoc()) {
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Rating</th>
+                        <th>Rate Admin</th>
+                        <th>Rate Dokter</th>
+                        <th>Rate Farmasi</th>
+
                         <th>Ulasan</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($ratings as $rating): ?>
                         <tr>
-                            <td><?php echo $rating['rating']; ?> Bintang</td>
+                            <td><?php echo $rating['rate_admin']; ?> Bintang</td>
+                            <td><?php echo $rating['rate_dokter']; ?> Bintang</td>
+
+                            <td><?php echo $rating['rate_farmasi']; ?> Bintang</td>
+
                             <td><?php echo $rating['ulasan']; ?></td>
                         </tr>
                     <?php endforeach; ?>
