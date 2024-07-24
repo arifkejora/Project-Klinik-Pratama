@@ -16,9 +16,9 @@ function generateId($conn) {
       $lastId = $row['id_rujukan'];
       $lastNumber = intval(substr($lastId, 3)); // Get numbers after 'RSP'
       $newNumber = $lastNumber + 1;
-      return 'RSP' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+      return 'RJK' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
   } else {
-      return 'RSP01'; // First ID if the table is empty
+      return 'RJK01'; // First ID if the table is empty
   }
 }
 
@@ -28,7 +28,6 @@ $message = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit'])) {
     $no_rekam_medis = $_POST['no_rekam_medis'];
     $newId = generateId($conn);
-    // Menghilangkan karakter "RM00" dari input nomor rekam medis
     $no_rekam_medis_clean = preg_replace('/^RM00/', '', $no_rekam_medis);
 
     // Query untuk mendapatkan detail rekam medis

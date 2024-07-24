@@ -13,7 +13,7 @@ $query = "
     SELECT 
         a.id_antrian, 
         j.tanggal, 
-        CONCAT('RM00', rm.id_rekam_medis) as nomor_rekam_medis,
+        rm.id_rekam_medis as nomor_rekam_medis,
         p.nama_pasien, 
         a.status_antrian 
     FROM antrian a

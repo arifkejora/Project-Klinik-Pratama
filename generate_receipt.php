@@ -58,13 +58,15 @@ class PDF extends FPDF {
     }
 }
 
-$id_rekam_medis = $_GET['id_rekam_medis']; 
+$id_rekam_medis = $conn->real_escape_string($_GET['id_rekam_medis']); 
 $sql = "SELECT p.nama_pasien, d.alamat_pasien, rm.hasil_pemeriksaan 
         FROM pasien p 
         INNER JOIN detail_pasien d ON p.id_pasien = d.id_pasien
         JOIN antrian a ON p.id_pasien = a.id_pasien
         JOIN rekam_medis rm ON a.id_antrian = rm.id_antrian
-        WHERE rm.id_rekam_medis = $id_rekam_medis"; 
+        WHERE rm.id_rekam_medis = '$id_rekam_medis'"; 
+
+$result = $conn->query($sql);
 
 $result = $conn->query($sql);
 
@@ -77,9 +79,9 @@ if ($result->num_rows > 0) {
     );
 
     $sql2 = "SELECT obat.nama_obat, obat.harga_obat
-             FROM resep_obat
-             INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
-             WHERE resep_obat.id_rekammedis = $id_rekam_medis";
+    FROM resep_obat
+    INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
+    WHERE resep_obat.id_rekammedis = '$id_rekam_medis'";
 
     $result2 = $conn->query($sql2);
     $prescriptions = array();
@@ -93,11 +95,11 @@ if ($result->num_rows > 0) {
     }
 
     $sql3 = "SELECT dokter.harga_perkunjungan
-             FROM rekam_medis
-             INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
-             INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
-             INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
-             WHERE rekam_medis.id_rekam_medis = $id_rekam_medis";
+    FROM rekam_medis
+    INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
+    INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
+    INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
+    WHERE rekam_medis.id_rekam_medis = '$id_rekam_medis'";
 
     $result3 = $conn->query($sql3);
     $doctorFee = 0;

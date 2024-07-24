@@ -15,7 +15,7 @@ if (!$id_antrian) {
 function generateId($conn) {
     $sql = "SELECT id_resep FROM resep_obat ORDER BY id_resep DESC LIMIT 1";
     $result = $conn->query($sql);
-  
+
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $lastId = $row['id_resep'];
@@ -29,7 +29,7 @@ function generateId($conn) {
 
 $rekamMedisQuery = "SELECT id_rekam_medis, tekanan_darah_s, tekanan_darah_d, berat_badan, suhu_badan FROM rekam_medis WHERE id_antrian = ?";
 $rekamMedisStmt = $conn->prepare($rekamMedisQuery);
-$rekamMedisStmt->bind_param("i", $id_antrian);
+$rekamMedisStmt->bind_param("s", $id_antrian); // Use 's' for string
 $rekamMedisStmt->execute();
 $rekamMedisResult = $rekamMedisStmt->get_result();
 
@@ -67,7 +67,7 @@ if ($rekamMedisResult->num_rows > 0) {
 
         // Prepare statements for inserting prescriptions and updating stock
         $resepObatQuery = "
-            INSERT INTO resep_obat (id_resep, id_rekammedis, id_obat, status) 
+            INSERT INTO resep_obat (id_resep, id_obat, id_rekammedis, status) 
             VALUES (?, ?, ?, 'Antrian')";
         $updateStokQuery = "
             UPDATE obat
@@ -86,16 +86,16 @@ if ($rekamMedisResult->num_rows > 0) {
         $conn->autocommit(FALSE);
         try {
             foreach ($resep_obat_ids as $id_obat) {
-                $id_obat = (int)trim($id_obat); // Ensure id_obat is an integer
-                if ($id_obat > 0) {
+                $id_obat = trim($id_obat); // Ensure id_obat is a string
+                if (!empty($id_obat)) {
                     // Insert into resep_obat
-                    $resepObatStmt->bind_param("iii", $newId, $id_rekammedis, $id_obat);
+                    $resepObatStmt->bind_param("sss", $newId, $id_obat, $id_rekammedis); // Use 's' for string
                     if (!$resepObatStmt->execute()) {
                         throw new Exception("Error inserting into resep_obat: " . $resepObatStmt->error);
                     }
 
                     // Update stock
-                    $updateStokStmt->bind_param("i", $id_obat);
+                    $updateStokStmt->bind_param("s", $id_obat); // Use 's' for string
                     if (!$updateStokStmt->execute()) {
                         throw new Exception("Error updating stock: " . $updateStokStmt->error);
                     }
@@ -113,15 +113,25 @@ if ($rekamMedisResult->num_rows > 0) {
 
         // Update antrian status
         $updateAntrianQuery = "
-            UPDATE antrian 
-            SET status_antrian = 'Selesai Diperiksa' 
-            WHERE id_antrian = ?";
+        UPDATE antrian 
+        SET status_antrian = 'Selesai Diperiksa' 
+        WHERE id_antrian = ?";
         $updateAntrianStmt = $conn->prepare($updateAntrianQuery);
-        $updateAntrianStmt->bind_param("i", $id_antrian);
-        if (!$updateAntrianStmt->execute()) {
-            error_log("Error updating antrian: " . $updateAntrianStmt->error);
+        if (!$updateAntrianStmt) {
+            error_log("Error preparing updateAntrianStmt: " . $conn->error);
             exit;
         }
+
+        $updateAntrianStmt->bind_param("s", $id_antrian); 
+        if (!$updateAntrianStmt->execute()) {
+            error_log("Error executing updateAntrianStmt: " . $updateAntrianStmt->error);
+            exit;
+        }
+
+        if ($updateAntrianStmt->affected_rows === 0) {
+            error_log("No rows were updated. Check if the id_antrian exists.");
+        }
+
         $updateAntrianStmt->close();
 
         header("Location: doctor-patient.php");
@@ -133,6 +143,7 @@ if ($rekamMedisResult->num_rows > 0) {
 
 $conn->close();
 ?>
+
 
 
 <!DOCTYPE html>
@@ -196,73 +207,71 @@ $conn->close();
     </div>
 
     <script>
-    $(function() {
-        function split(val) {
-            return val.split(/,\s*/);
+$(function() {
+    function split(val) {
+        return val.split(/,\s*/);
+    }
+
+    function extractLast(term) {
+        return split(term).pop();
+    }
+
+    $("#inputResep").on("keydown", function(event) {
+        if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
+            event.preventDefault();
         }
-
-        function extractLast(term) {
-            return split(term).pop();
-        }
-
-        $("#inputResep").on("keydown", function(event) {
-            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete("instance").menu.active) {
-                event.preventDefault();
-            }
-        }).autocomplete({
-            source: function(request, response) {
-                $.getJSON("get-obat.php", {
-                    term: extractLast(request.term)
-                }, response);
-            },
-            search: function() {
-                var term = extractLast(this.value);
-                if (term.length < 2) {
-                    return false;
-                }
-            },
-            focus: function() {
-                return false;
-            },
-            select: function(event, ui) {
-                var terms = split(this.value);
-                var termsIds = $("#inputResepIds").val().split(/,\s*/);
-
-                terms.pop();
-                terms.push(ui.item.value); 
-                terms.push("");
-
-                termsIds.pop();
-                termsIds.push(ui.item.id);
-                termsIds.push("");
-
-                this.value = terms.join(", ");
-                $("#inputResepIds").val(termsIds.join(", "));
-
+    }).autocomplete({
+        source: function(request, response) {
+            $.getJSON("get-obat.php", {
+                term: extractLast(request.term)
+            }, response);
+        },
+        search: function() {
+            var term = extractLast(this.value);
+            if (term.length < 2) {
                 return false;
             }
-        });
+        },
+        focus: function() {
+            return false;
+        },
+        select: function(event, ui) {
+            var terms = split(this.value);
+            var termsIds = $("#inputResepIds").val().split(/,\s*/);
 
-        $(function() {
-            $("form").submit(function(event) {
-                var inputResepIds = $("#inputResepIds");
-                console.log('inputResepIds:', inputResepIds); // Check if the element is found
-                console.log('inputResepIds value before filter:', inputResepIds.val()); // Check the value before processing
+            terms.pop();
+            terms.push(ui.item.value); 
+            terms.push("");
 
-                if (inputResepIds.length) {
-                    var termsIds = inputResepIds.val().split(/,\s*/);
-                    inputResepIds.val(termsIds.filter(id => id !== ""));
-                    console.log('inputResepIds value after filter:', inputResepIds.val()); // Check the value after processing
-                } else {
-                    console.error('Element #inputResepIds not found.');
-                }
+            termsIds.pop();
+            termsIds.push(ui.item.id);
+            termsIds.push("");
 
-                return true; // Ensure the form submission proceeds
-            });
-        });
+            this.value = terms.join(", ");
+            var inputResepIds = $("#inputResepIds");
+            if (inputResepIds.length) {
+                inputResepIds.val(termsIds.join(", "));
+            } else {
+                console.error('Element #inputResepIds not found.');
+            }
 
-
+            return false;
+        }
     });
-    </script>
+
+    $("form").submit(function(event) {
+        var inputResepIds = $("#inputResepIds");
+        if (inputResepIds.length) {
+            var termsIds = inputResepIds.val().split(/,\s*/);
+            inputResepIds.val(termsIds.filter(id => id !== ""));
+        } else {
+            console.error('Element #inputResepIds not found.');
+        }
+
+        return true; // Ensure the form submission proceeds
+    });
+});
+</script>
+
 </body>
 </html>

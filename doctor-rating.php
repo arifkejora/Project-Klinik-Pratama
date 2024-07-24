@@ -2,45 +2,59 @@
 session_start();
 include('db_connection.php'); 
 
+// Check if the user is logged in as a doctor
 if (!isset($_SESSION['login_doctor'])) {
     header("location: pages-login-doctor.php");
     exit;
 }
 
+// Get the logged-in doctor's ID
+$id_dokter = $_SESSION['login_iddoc'];
+
 // SQL Queries to get counts
-$sql = "SELECT COUNT(*) AS total_medicine FROM obat";
-$result = mysqli_query($conn, $sql);
-$row = mysqli_fetch_assoc($result);
-$total_medicine = $row['total_medicine'];
+$sql_medicine = "SELECT COUNT(*) AS total_medicine FROM obat";
+$result_medicine = mysqli_query($conn, $sql_medicine);
+$row_medicine = mysqli_fetch_assoc($result_medicine);
+$total_medicine = $row_medicine['total_medicine'];
 
-$sql = "SELECT COUNT(*) AS total_pharmachy FROM farmasi";
-$result = mysqli_query($conn, $sql);
-$row = mysqli_fetch_assoc($result);
-$total_pharmachy = $row['total_pharmachy'];
+$sql_pharmachy = "SELECT COUNT(*) AS total_pharmachy FROM farmasi";
+$result_pharmachy = mysqli_query($conn, $sql_pharmachy);
+$row_pharmachy = mysqli_fetch_assoc($result_pharmachy);
+$total_pharmachy = $row_pharmachy['total_pharmachy'];
 
-$sql = "SELECT COUNT(*) AS total_doctor FROM dokter";
-$result = mysqli_query($conn, $sql);
-$row = mysqli_fetch_assoc($result);
-$total_doctor = $row['total_doctor'];
+$sql_doctor = "SELECT COUNT(*) AS total_doctor FROM dokter";
+$result_doctor = mysqli_query($conn, $sql_doctor);
+$row_doctor = mysqli_fetch_assoc($result_doctor);
+$total_doctor = $row_doctor['total_doctor'];
 
-$sql = "SELECT COUNT(*) AS total_patient FROM pasien";
-$result = mysqli_query($conn, $sql);
-$row = mysqli_fetch_assoc($result);
-$total_patient = $row['total_patient'];
+$sql_patient = "SELECT COUNT(*) AS total_patient FROM pasien";
+$result_patient = mysqli_query($conn, $sql_patient);
+$row_patient = mysqli_fetch_assoc($result_patient);
+$total_patient = $row_patient['total_patient'];
 
 // Calculate average rating
-$id_dokter = $_SESSION['login_iddoc'];
-$sql_avg_rating = "SELECT AVG(r.rate_dokter) as avg_rating 
-                   FROM rating r
-                   JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
-                   JOIN antrian a ON rm.id_antrian = a.id_antrian
-                   JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
-                   JOIN dokter d ON jd.id_dokter = d.id_dokter
-                   WHERE d.id_dokter = $id_dokter";
-$result_avg_rating = mysqli_query($conn, $sql_avg_rating);
-$row_avg_rating = mysqli_fetch_assoc($result_avg_rating);
+$stmt_avg_rating = $conn->prepare("SELECT AVG(r.rate_dokter) as avg_rating 
+                                   FROM rating r
+                                   JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
+                                   JOIN antrian a ON rm.id_antrian = a.id_antrian
+                                   JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+                                   JOIN dokter d ON jd.id_dokter = d.id_dokter
+                                   WHERE d.id_dokter = ?");
+                                   
+// Bind the parameter (assuming id_dokter is an integer)
+$stmt_avg_rating->bind_param("i", $id_dokter);
+
+// Execute the query
+$stmt_avg_rating->execute();
+
+// Fetch the result
+$result_avg_rating = $stmt_avg_rating->get_result();
+$row_avg_rating = $result_avg_rating->fetch_assoc();
 $avg_rating = round($row_avg_rating['avg_rating'], 1);
 
+// Close the statement and connection
+$stmt_avg_rating->close();
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -190,48 +204,64 @@ $avg_rating = round($row_avg_rating['avg_rating'], 1);
                     </p>
                   </div>
 
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th scope="col">Rekam Medis</th>
-                                <th scope="col">Rating</th>
-                                <th scope="col">Ulasan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            include('db_connection.php');
+                  <table class="table table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">Rekam Medis</th>
+            <th scope="col">Rating</th>
+            <th scope="col">Ulasan</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        include('db_connection.php');
 
-                            // Query untuk mendapatkan semua data rating
-                            $id_dokter = $_SESSION['login_iddoc'];
-                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rate_dokter, r.ulasan 
-                                    FROM rating r
-                                    JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
-                                    JOIN antrian a ON rm.id_antrian = a.id_antrian
-                                    JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
-                                    JOIN dokter d ON jd.id_dokter = d.id_dokter
-                                    WHERE d.id_dokter = $id_dokter";
-                            $result = $conn->query($sql);
+        // Check if the user is logged in as a doctor
+        if (!isset($_SESSION['login_doctor'])) {
+            header("location: pages-login-doctor.php");
+            exit;
+        }
 
+        // Get the logged-in doctor's ID
+        $id_dokter = $_SESSION['login_iddoc'];
 
-                            if ($result->num_rows > 0) {
-                                while ($rating = $result->fetch_assoc()) {
-                                    echo "<tr>";
-                                    echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
+        // Prepare the SQL statement
+        $stmt = $conn->prepare("SELECT r.id_rating, r.id_rekam_medis, r.rate_dokter, r.ulasan 
+                                FROM rating r
+                                JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
+                                JOIN antrian a ON rm.id_antrian = a.id_antrian
+                                JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+                                JOIN dokter d ON jd.id_dokter = d.id_dokter
+                                WHERE d.id_dokter = ?");
+                                
+        // Bind the parameter (assuming id_dokter is an integer)
+        $stmt->bind_param("i", $id_dokter);
 
-                                    echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
-                                    echo "<td>" . $rating['ulasan'] . "</td>";
-                                    echo "</tr>";
-                                }
-                            } else {
-                                echo "<tr><td colspan='4' class='text-center'>Tidak ada data rating</td></tr>";
-                            }
+        // Execute the statement
+        $stmt->execute();
 
-                            // Menutup koneksi
-                            $conn->close();
-                            ?>
-                        </tbody>
-                    </table>
+        // Get the result
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            while ($rating = $result->fetch_assoc()) {
+                echo "<tr>";
+                echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
+                echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
+                echo "<td>" . $rating['ulasan'] . "</td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='3' class='text-center'>Tidak ada data rating</td></tr>";
+        }
+
+        // Close the statement and connection
+        $stmt->close();
+        $conn->close();
+        ?>
+    </tbody>
+</table>
+
                 </div>
             </div>
         </div>
