@@ -175,7 +175,7 @@ $avg_rating = round($avg_row['avg_rating'], 1);
             <tr>
                 <td><?php echo $row['tanggal']; ?></td>
                 <td><?php echo $row['nama_pasien']; ?></td>
-                <td>RM00<?php echo $row['id_rekam_medis']; ?></td>
+                <td><?php echo $row['id_rekam_medis']; ?></td>
                 <td><?php echo $row['status_obat']; ?></td>
                 <td>
                     <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">

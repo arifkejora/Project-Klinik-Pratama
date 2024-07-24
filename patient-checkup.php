@@ -284,7 +284,7 @@ $result_history = $stmt_history->get_result();
                                 <td>{$row['dtmcrt']}</td>
                                 <td>{$estimasi_waktu}</td>
                                 <td>{$row['status_antrian']}</td>
-                                <td>RM00" . htmlspecialchars($row['id_rekam_medis']) . "</td>
+                                <td>{$row['id_rekam_medis']}</td>
                                 <td>{$row['pembayaran']}</td>
                                 <td>{$row['status_pembayaran']}</td>
                                 <td>

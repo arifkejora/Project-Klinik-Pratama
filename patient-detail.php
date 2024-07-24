@@ -252,7 +252,6 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                     <?php foreach ($ratings as $rating): ?>
                         <div class="card mb-3">
                             <div class="card-body">
-                                <p><strong>Rating:</strong> <?php echo $rating['rate_admin'] ?? $rating['rate_dokter'] ?? $rating['rate_farmasi']; ?></p>
                                 <p><strong>Ulasan:</strong> <?php echo htmlspecialchars($rating['ulasan']); ?></p>
                             </div>
                         </div>

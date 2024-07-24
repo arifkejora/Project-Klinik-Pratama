@@ -229,8 +229,7 @@ while ($row_dist = mysqli_fetch_assoc($result_dist)) {
                             if ($result->num_rows > 0) {
                                 while ($rating = $result->fetch_assoc()) {
                                     echo "<tr>";
-                                    echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
-
+                                    echo "<td>" . $rating['id_rekam_medis'] . "</td>";
                                     echo "<td>" . $rating['rate_admin'] . " Bintang</td>";
                                     echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
                                     echo "<td>" . $rating['rate_farmasi'] . " Bintang</td>";
