@@ -109,8 +109,12 @@ if (isset($_GET['id_rekam_medis'])) {
                         <textarea class="form-control" id="inputDiagnosa" name="diagnosa" rows="3" required><?php echo htmlspecialchars($rekam_medis['diagnosa']); ?></textarea>
                     </div>
                     <div class="col-md-4">
-                        <label for="inputTekananDarah" class="form-label">Tekanan Darah</label>
-                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" value="<?php echo htmlspecialchars($rekam_medis['tekanan_darah']); ?>" required>
+                        <label for="inputTekananDarah" class="form-label">Tekanan Darah S</label>
+                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" value="<?php echo htmlspecialchars($rekam_medis['tekanan_darah_s']); ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="inputTekananDarah" class="form-label">Tekanan Darah D</label>
+                        <input type="text" class="form-control" id="inputTekananDarah" name="tekanan_darah" value="<?php echo htmlspecialchars($rekam_medis['tekanan_darah_d']); ?>" required>
                     </div>
                     <div class="col-md-4">
                         <label for="inputBeratBadan" class="form-label">Berat Badan</label>

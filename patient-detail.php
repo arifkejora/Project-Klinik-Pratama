@@ -5,22 +5,6 @@ include('db_connection.php');
 $status_obat = '';
 $message = '';
 
-
-function generateId($conn) {
-    $sql = "SELECT id_detail_pasien FROM detail_pasien ORDER BY id_detail_pasien DESC LIMIT 1";
-    $result = $conn->query($sql);
-
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $lastId = $row['id_detail_pasien'];
-        $lastNumber = intval(substr($lastId, 3)); // Changed to get numbers after 'DPS'
-        $newNumber = $lastNumber + 1;
-        return 'RAT' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
-    } else {
-        return 'RAT01'; // First ID if the table is empty
-    }
-}
-
 if (isset($_GET['id_rekam_medis'])) {
     $id = $_GET['id_rekam_medis'];
 
@@ -71,37 +55,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $rating = $_POST['rating'];
     $ulasan = $_POST['ulasan'];
     $id_rekam_medis = $_POST['id_rekam_medis'];
-    $newId = generateId($conn);
     $role = $_POST['role'];
+    $id_antrian = $rekam_medis['id_antrian']; // Assuming id_antrian is available from $rekam_medis
 
-    $sql_insert_rating = "";
+    $sql_update_rating = "";
     if ($role == 'admin') {
-        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_admin, ulasan) VALUES (?, ?, ?, ?)";
+        $sql_update_rating = "UPDATE rekam_medis SET rate_admin = ?, ulasan_admin = ? WHERE id_rekam_medis = ? AND id_antrian = ?";
     } elseif ($role == 'dokter') {
-        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_dokter, ulasan) VALUES (?, ?, ?, ?)";
+        $sql_update_rating = "UPDATE rekam_medis SET rate_dokter = ?, ulasan_dokter = ? WHERE id_rekam_medis = ? AND id_antrian = ?";
     } elseif ($role == 'farmasi') {
-        $sql_insert_rating = "INSERT INTO rating (id_rating, id_rekam_medis, rate_farmasi, ulasan) VALUES (?, ?, ?, ?)";
+        $sql_update_rating = "UPDATE rekam_medis SET rate_farmasi = ?, ulasan_farmasi = ? WHERE id_rekam_medis = ? AND id_antrian = ?";
     }
 
-    $stmt_insert_rating = $conn->prepare($sql_insert_rating);
-    $stmt_insert_rating->bind_param("ssss", $newId, $id_rekam_medis, $rating, $ulasan);
+    if ($sql_update_rating) {
+        $stmt_update_rating = $conn->prepare($sql_update_rating);
+        $stmt_update_rating->bind_param("issi", $rating, $ulasan, $id_rekam_medis, $id_antrian);
 
-    if ($stmt_insert_rating->execute()) {
-        $message = "Rating and review submitted successfully.";
-    } else {
-        $message = "Failed to submit rating and review.";
+        if ($stmt_update_rating->execute()) {
+            $message = "Rating and review submitted successfully.";
+        } else {
+            $message = "Failed to submit rating and review.";
+        }
     }
 }
 
-$sql_rating = "SELECT * FROM rating WHERE id_rekam_medis = ?";
+$sql_rating = "SELECT rate_admin, rate_dokter, rate_farmasi, ulasan_admin, ulasan_dokter, ulasan_farmasi 
+               FROM rekam_medis WHERE id_rekam_medis = ?";
 $stmt_rating = $conn->prepare($sql_rating);
 $stmt_rating->bind_param("i", $id);
 $stmt_rating->execute();
 $result_rating = $stmt_rating->get_result();
-$ratings = [];
-while ($row_rating = $result_rating->fetch_assoc()) {
-    $ratings[] = $row_rating;
-}
+$ratings = $result_rating->fetch_assoc();
+
 ?>
 
 <!DOCTYPE html>
@@ -112,9 +97,10 @@ while ($row_rating = $result_rating->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Pemeriksaan</title>
     <style>
+        /* CSS Anda di sini */
         .rating {
             display: flex;
-            flex-direction: row;
+            flex-direction: row; /* Urutan bintang dari kiri ke kanan */
         }
 
         .rating .star {
@@ -127,7 +113,7 @@ while ($row_rating = $result_rating->fetch_assoc()) {
         .rating .star:hover,
         .rating .star.active,
         .rating .star:hover ~ .star {
-            color: #FFD700;
+            color: #FFD700; /* warna bintang saat dihover dan yang dipilih */
         }
     </style>
 
@@ -192,93 +178,131 @@ while ($row_rating = $result_rating->fetch_assoc()) {
                                     <?php foreach ($resep_obat as $obat): ?>
                                         <li>
                                             <div class="row g-3">
-                                                <div class="col-md-3">
-                                                    <label for="inputObat_<?php echo $obat['id_resep']; ?>" class="form-label">Nama Obat</label>
-                                                    <input type="text" class="form-control" id="inputObat_<?php echo $obat['id_resep']; ?>" name="nama_obat_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['nama_obat']); ?>" readonly>
+                                                <div class="col-md-6">
+                                                    <strong>Nama Obat:</strong> <?php echo htmlspecialchars($obat['nama_obat']); ?>
                                                 </div>
-                                                <div class="col-md-3">
-                                                    <label for="inputJenisObat_<?php echo $obat['id_resep']; ?>" class="form-label">Jenis Obat</label>
-                                                    <input type="text" class="form-control" id="inputJenisObat_<?php echo $obat['id_resep']; ?>" name="jenis_obat_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['jenis_obat']); ?>" readonly>
+                                                <div class="col-md-6">
+                                                    <strong>Status:</strong> <?php echo htmlspecialchars($obat['status']); ?>
                                                 </div>
-                                                <div class="col-md-3">
-                                                    <label for="inputAturan_<?php echo $obat['id_resep']; ?>" class="form-label">Aturan</label>
-                                                    <input type="text" class="form-control" id="inputAturan_<?php echo $obat['id_resep']; ?>" name="aturan_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['aturan']); ?>" readonly>
+                                                <div class="col-md-12">
+                                                    <strong>Aturan:</strong> <?php echo htmlspecialchars($obat['aturan']); ?>
                                                 </div>
-                                                <div class="col-md-3">
-                                                    <label for="inputKeterangan_<?php echo $obat['id_resep']; ?>" class="form-label">Keterangan</label>
-                                                    <input type="text" class="form-control" id="inputKeterangan_<?php echo $obat['id_resep']; ?>" name="keterangan_<?php echo $obat['id_resep']; ?>" value="<?php echo htmlspecialchars($obat['keterangan']); ?>" readonly>
+                                                <div class="col-md-12">
+                                                    <strong>Keterangan:</strong> <?php echo htmlspecialchars($obat['keterangan']); ?>
+                                                </div>
+                                                <div class="col-md-12">
+                                                    <strong>Jenis Obat:</strong> <?php echo htmlspecialchars($obat['jenis_obat']); ?>
                                                 </div>
                                             </div>
                                         </li>
                                     <?php endforeach; ?>
                                 </ol>
                             <?php else: ?>
-                                <p>Tidak ada resep obat yang ditemukan.</p>
+                                <p>Tidak ada resep obat untuk pasien ini.</p>
                             <?php endif; ?>
                         </div>
                     </div>
-                </form>
-                <hr>
-                <h5>Rating dan Ulasan</h5>
-                <form action="" method="POST">
-                    <div class="form-group">
-                        <label for="role">Pilih Bagian</label>
-                        <select class="form-control" id="role" name="role" required>
-                            <option value="">Pilih Bagian</option>
-                            <option value="admin">Admin</option>
-                            <option value="dokter">Dokter</option>
-                            <option value="farmasi">Farmasi</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="rating">Rating</label>
-                        <div class="rating">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <span class="star" data-value="<?php echo $i; ?>">&#9733;</span>
-                            <?php endfor; ?>
-                        </div>
-                        <input type="hidden" id="rating" name="rating" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="ulasan">Ulasan</label>
-                        <textarea class="form-control" id="ulasan" name="ulasan" rows="3" required></textarea>
-                    </div>
-                    <input type="hidden" name="id_rekam_medis" value="<?php echo $id; ?>">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </form>
-                <hr>
-                <h5>Ulasan dari Pengguna Lain</h5>
-                <?php if (!empty($ratings)): ?>
-                    <?php foreach ($ratings as $rating): ?>
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <p><strong>Rating:</strong> <?php echo $rating['rate_admin'] ?? $rating['rate_dokter'] ?? $rating['rate_farmasi']; ?></p>
-                                <p><strong>Ulasan:</strong> <?php echo htmlspecialchars($rating['ulasan']); ?></p>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label for="inputRole" class="form-label">Pilih Role</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="role" id="roleAdmin" value="admin" required>
+                                <label class="form-check-label" for="roleAdmin">
+                                    Admin
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="role" id="roleDokter" value="dokter">
+                                <label class="form-check-label" for="roleDokter">
+                                    Dokter
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="role" id="roleFarmasi" value="farmasi">
+                                <label class="form-check-label" for="roleFarmasi">
+                                    Farmasi
+                                </label>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p>Belum ada ulasan.</p>
-                <?php endif; ?>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label for="inputRating" class="form-label">Rating</label>
+                            <div class="rating">
+                                <span class="star" data-value="5">&#9733;</span>
+                                <span class="star" data-value="4">&#9733;</span>
+                                <span class="star" data-value="3">&#9733;</span>
+                                <span class="star" data-value="2">&#9733;</span>
+                                <span class="star" data-value="1">&#9733;</span>
+                            </div>
+                            <input type="hidden" name="rating" id="inputRating" value="">
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label for="inputUlasan" class="form-label">Ulasan</label>
+                            <textarea class="form-control" id="inputUlasan" name="ulasan" rows="3" required></textarea>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="id_rekam_medis" value="<?php echo htmlspecialchars($id); ?>">
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">Kirim Rating dan Ulasan</button>
+                        </div>
+                    </div>
+                </form>
+                <table class="table">
+            <thead>
+                <tr>
+                    <th>Admin</th>
+                    <th>Dokter</th>
+                    <th>Farmasi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><?php echo htmlspecialchars($ratings['rate_admin']); ?> Bintang</td>
+                    <td><?php echo htmlspecialchars($ratings['rate_dokter']); ?> Bintang</td>
+                    <td><?php echo htmlspecialchars($ratings['rate_farmasi']); ?> Bintang</td>
+                </tr>
+                <tr>
+                    <td><?php echo htmlspecialchars($ratings['ulasan_admin']); ?></td>
+                    <td><?php echo htmlspecialchars($ratings['ulasan_dokter']); ?></td>
+                    <td><?php echo htmlspecialchars($ratings['ulasan_farmasi']); ?></td>
+                </tr>
+            </tbody>
+        </table>
             </div>
         </div>
     </div>
 
     <script>
-        document.querySelectorAll('.star').forEach(function (star) {
-            star.addEventListener('click', function () {
-                let value = this.getAttribute('data-value');
-                document.getElementById('rating').value = value;
+        document.addEventListener('DOMContentLoaded', function () {
+            const stars = document.querySelectorAll('.star');
+            const ratingInput = document.getElementById('inputRating');
 
-                document.querySelectorAll('.star').forEach(function (s) {
-                    s.classList.remove('active');
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = star.getAttribute('data-value');
+                    ratingInput.value = value;
+                    updateStars(value);
                 });
-                this.classList.add('active');
-                this.previousElementSibling && this.previousElementSibling.classList.add('active');
-                while ((star = star.previousElementSibling)) {
-                    star.classList.add('active');
-                }
             });
+
+            function updateStars(value) {
+                stars.forEach(star => {
+                    if (star.getAttribute('data-value') <= value) {
+                        star.classList.add('active');
+                    } else {
+                        star.classList.remove('active');
+                    }
+                });
+            }
         });
     </script>
 </body>

@@ -15,7 +15,7 @@ if (isset($_GET['id_rekam_medis'])) {
                         INNER JOIN detail_pasien dp ON p.id_pasien = dp.id_pasien
                         WHERE rm.id_rekam_medis = ?";
     $stmt_rekam_medis = $conn->prepare($sql_rekam_medis);
-    $stmt_rekam_medis->bind_param("i", $id);
+    $stmt_rekam_medis->bind_param("s", $id); // Change "i" to "s" for string
     $stmt_rekam_medis->execute();
     $result_rekam_medis = $stmt_rekam_medis->get_result();
     $rekam_medis = $result_rekam_medis->fetch_assoc();
@@ -30,7 +30,7 @@ if (isset($_GET['id_rekam_medis'])) {
                   INNER JOIN obat o ON ro.id_obat = o.id_obat 
                   WHERE ro.id_rekammedis = ?";
     $stmt_resep = $conn->prepare($sql_resep);
-    $stmt_resep->bind_param("i", $id);
+    $stmt_resep->bind_param("s", $id); // Change "i" to "s" for string
     $stmt_resep->execute();
     $result_resep = $stmt_resep->get_result();
     $resep_obat = [];
@@ -54,22 +54,22 @@ if (isset($_GET['id_rekam_medis'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'proses_obat') {
     foreach ($resep_obat as $obat) {
         $id_resep = $obat['id_resep'];
-        $aturan = $_POST["aturan$id_resep"];
-        $keterangan = $_POST["keterangan$id_resep"];
+        $aturan = $_POST["aturan_$id_resep"];
+        $keterangan = $_POST["keterangan_$id_resep"];
 
         $sql_update = "UPDATE resep_obat SET aturan = ?, keterangan = ? WHERE id_resep = ?";
         $stmt_update = $conn->prepare($sql_update);
-        $stmt_update->bind_param("ssi", $aturan, $keterangan, $id_resep);
+        $stmt_update->bind_param("sss", $aturan, $keterangan, $id_resep); // Ensure correct parameter types
         $stmt_update->execute();
     }
     
     $sql_update_status = "UPDATE resep_obat SET status = 'Selesai' WHERE id_rekammedis = ?";
     $stmt_update_status = $conn->prepare($sql_update_status);
-    $stmt_update_status->bind_param("i", $id);
+    $stmt_update_status->bind_param("s", $id); // Change "i" to "s" for string
     $stmt_update_status->execute();
 
     $message = "Status obat berhasil diubah.";
-    header("Location: farmasi-riwayat.php");
+    header("Location: farmasi-riwayat.php?status_changed=true");
     exit;
 }
 ?>
