@@ -7,6 +7,24 @@ if (!isset($_SESSION['login_user'])) {
     exit;
 }
 
+// Handle POST request to update queue status
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['action'] == 'tolak') {
+    $id_antrian = $_POST['id_antrian'];
+    $updateQuery = "UPDATE antrian SET status_antrian = 'Ditolak' WHERE id_antrian = ?";
+    
+    $stmt = $conn->prepare($updateQuery);
+    $stmt->bind_param("s", $id_antrian);
+    
+    if ($stmt->execute()) {
+        echo "Antrian berhasil ditolak.";
+    } else {
+        echo "Gagal menolak antrian: " . $conn->error;
+    }
+    
+    $stmt->close();
+}
+
+// Fetch queue data
 $queueData = [];
 
 $queueQuery = "
@@ -18,7 +36,6 @@ $queueQuery = "
     ORDER BY a.antrian ASC;
 ";
 
-    
 $queueStmt = $conn->prepare($queueQuery);
 $queueStmt->execute();
 $queueResult = $queueStmt->get_result();
@@ -32,10 +49,8 @@ if ($queueResult->num_rows > 0) {
 $queueStmt->close();
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -45,7 +60,7 @@ $queueStmt->close();
   <link href="assets/img/favicon.png" rel="icon">
   <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
   <link href="https://fonts.gstatic.com" rel="preconnect">
-  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i" rel="stylesheet">
   <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
   <link href="assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
@@ -55,7 +70,6 @@ $queueStmt->close();
   <link href="assets/vendor/simple-datatables/style.css" rel="stylesheet">
   <link href="assets/css/style.css" rel="stylesheet">
 </head>
-
 <body>
   <header id="header" class="header fixed-top d-flex align-items-center">
     <div class="d-flex align-items-center justify-content-between">
@@ -93,7 +107,6 @@ $queueStmt->close();
 
   <aside id="sidebar" class="sidebar">
     <ul class="sidebar-nav" id="sidebar-nav">
-
       <li class="nav-item">
         <a class="nav-link collapsed" href="admin_dashboard.php">
           <i class="bi bi-grid"></i>
@@ -153,7 +166,6 @@ $queueStmt->close();
   </aside>
 
   <main id="main" class="main">
-
   <section class="section">
       <div class="row">
         <div class="col-lg-12">
@@ -190,37 +202,29 @@ $queueStmt->close();
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr><td colspan="4" class="text-center">Tidak ada data antrian</td></tr>
+                    <tr>
+                        <td colspan="4">Tidak ada antrian.</td>
+                    </tr>
                 <?php endif; ?>
             </tbody>
-        </table>
+            </table>
             </div>
-          </div>
+        </div>
         </div>
       </div>
     </section>
-
   </main>
 
-  <footer id="footer" class="footer">
-    <div class="copyright">
-      &copy; Copyright <strong><span>Klinik Pratama Anugrah Hexa</span></strong>. All Rights Reserved
-    </div>
-    <div class="credits">
-      Designed by <a href="#">Artadevnymous</a>
-    </div>
-  </footer>
-
   <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
   <script src="assets/vendor/apexcharts/apexcharts.min.js"></script>
   <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="assets/vendor/chart.js/chart.umd.js"></script>
   <script src="assets/vendor/echarts/echarts.min.js"></script>
-  <script src="assets/vendor/quill/quill.js"></script>
+  <script src="assets/vendor/quill/quill.min.js"></script>
   <script src="assets/vendor/simple-datatables/simple-datatables.js"></script>
   <script src="assets/vendor/tinymce/tinymce.min.js"></script>
   <script src="assets/vendor/php-email-form/validate.js"></script>
   <script src="assets/js/main.js"></script>
 </body>
-
 </html>
