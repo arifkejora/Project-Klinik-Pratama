@@ -215,26 +215,31 @@ while ($row_dist = mysqli_fetch_assoc($result_dist)) {
                                 <th scope="col">Rating Admin</th>
                                 <th scope="col">Rating Dokter</th>
                                 <th scope="col">Rating Farmasi</th>
-                                <th scope="col">Ulasan</th>
+                                <th scope="col">Ulasan Admin</th>
+                                <th scope="col">Ulasan Dokter</th>
+                                <th scope="col">Ulasan Farmasi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
                             include('db_connection.php');
 
-                            $sql = "SELECT r.id_rating, r.id_rekam_medis, r.rate_admin, r.rate_dokter, r.rate_farmasi, r.ulasan 
-                                    FROM rating r";
+                            $sql = "SELECT r.id_rekam_medis, r.rate_admin, r.rate_dokter, r.rate_farmasi, r.ulasan_admin, r.ulasan_dokter, r.ulasan_farmasi 
+                                    FROM rekam_medis r";
                             $result = $conn->query($sql);
 
                             if ($result->num_rows > 0) {
                                 while ($rating = $result->fetch_assoc()) {
                                     echo "<tr>";
-                                    echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
+                                    echo "<td>" . $rating['id_rekam_medis'] . "</td>";
 
                                     echo "<td>" . $rating['rate_admin'] . " Bintang</td>";
                                     echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
                                     echo "<td>" . $rating['rate_farmasi'] . " Bintang</td>";
-                                    echo "<td>" . $rating['ulasan'] . "</td>";
+                                    echo "<td>" . $rating['ulasan_admin'] . "</td>";
+                                    echo "<td>" . $rating['ulasan_dokter'] . "</td>";
+                                    echo "<td>" . $rating['ulasan_farmasi'] . "</td>";
+
                                     echo "</tr>";
                                 }
                             } else {

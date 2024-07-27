@@ -223,16 +223,15 @@ $stmt_avg_rating->close();
         $id_dokter = $_SESSION['login_iddoc'];
 
         // Prepare the SQL statement
-        $stmt = $conn->prepare("SELECT r.id_rating, r.id_rekam_medis, r.rate_dokter, r.ulasan 
-                                FROM rating r
-                                JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
+        $stmt = $conn->prepare("SELECT rm.id_rekam_medis, rm.rate_dokter, rm.ulasan_dokter 
+                                FROM rekam_medis rm 
                                 JOIN antrian a ON rm.id_antrian = a.id_antrian
                                 JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
                                 JOIN dokter d ON jd.id_dokter = d.id_dokter
                                 WHERE d.id_dokter = ?");
                                 
         // Bind the parameter (assuming id_dokter is an integer)
-        $stmt->bind_param("i", $id_dokter);
+        $stmt->bind_param("s", $id_dokter);
 
         // Execute the statement
         $stmt->execute();
@@ -243,9 +242,9 @@ $stmt_avg_rating->close();
         if ($result->num_rows > 0) {
             while ($rating = $result->fetch_assoc()) {
                 echo "<tr>";
-                echo "<td>RM00" . $rating['id_rekam_medis'] . "</td>";
+                echo "<td>" . $rating['id_rekam_medis'] . "</td>";
                 echo "<td>" . $rating['rate_dokter'] . " Bintang</td>";
-                echo "<td>" . $rating['ulasan'] . "</td>";
+                echo "<td>" . $rating['ulasan_dokter'] . "</td>";
                 echo "</tr>";
             }
         } else {
