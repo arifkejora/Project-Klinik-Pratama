@@ -17,6 +17,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     exit;
 }
 
+$sql = "SELECT jd.tanggal, p.nama_pasien, a.id_antrian, rm.id_rekam_medis, MIN(ro.status) AS status_obat
+        FROM rekam_medis rm
+        INNER JOIN antrian a ON rm.id_antrian = a.id_antrian
+        INNER JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
+        INNER JOIN pasien p ON a.id_pasien = p.id_pasien
+        LEFT JOIN resep_obat ro ON rm.id_rekam_medis = ro.id_rekammedis
+        GROUP BY rm.id_rekam_medis";
+
+$result = mysqli_query($conn, $sql);
+$queueData = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
 // Query untuk mengambil data rekam medis
 $avg_sql = "SELECT AVG(rate_farmasi) AS avg_rating FROM rekam_medis";
 $avg_result = mysqli_query($conn, $avg_sql);
