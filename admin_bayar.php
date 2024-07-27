@@ -14,91 +14,103 @@ $id_rekam_medis = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-      if (isset($_POST['generate_payment'])) {
-        if (isset($_POST['id_rekam_medis'])) {
-            $id_rekam_medis = $_POST['id_rekam_medis'];
+  ini_set('display_startup_errors', 1);
+  error_reporting(E_ALL);
+  
+  if (isset($_POST['generate_payment'])) {
+    if (isset($_POST['id_rekam_medis'])) {
+        $id_rekam_medis = $_POST['id_rekam_medis'];
 
-            // Prepare the SQL statement
-            $stmt = $conn->prepare("
-                SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
+        // Prepare the SQL statement
+        $stmt = $conn->prepare("
+            SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
+            FROM resep_obat
+            INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
+            INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
+            INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
+            INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
+            INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
+            WHERE resep_obat.id_rekammedis = ?
+        ");
+
+        // Bind parameters
+        $stmt->bind_param("s", $id_rekam_medis);
+
+        // Execute the statement
+        $stmt->execute();
+
+        // Get the result
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $total_obat = $row['total_obat'];
+            $harga_perkunjungan = $row['harga_perkunjungan'];
+            $total_biaya = $total_obat + $harga_perkunjungan;
+        } else {
+            $message = "Error: Tidak dapat menghitung total biaya.";
+        }
+
+        // Close the statement
+        $stmt->close();
+    } else {
+        $message = "Error: Data tidak lengkap.";
+    }
+  }
+
+  if (isset($_POST['process_payment'])) {
+    if (isset($_POST['id_rekam_medis'])) {
+        $id_rekam_medis = $conn->real_escape_string($_POST['id_rekam_medis']);
+        $total_biaya = $_POST['total_biaya'];
+
+        // Update status_pembayaran to 'Lunas' and set pembayaran to total_biaya in rekam_medis
+        $update_sql = "UPDATE rekam_medis SET pembayaran = '$total_biaya', status_pembayaran = 'Lunas' WHERE id_rekam_medis = '$id_rekam_medis'";
+
+        if ($conn->query($update_sql) === TRUE) {
+            $message = "Pembayaran berhasil.";
+
+            // Update the antrian table
+            $update_antrian_sql = "UPDATE antrian 
+                                   INNER JOIN rekam_medis ON antrian.id_antrian = rekam_medis.id_antrian
+                                   SET antrian.status_antrian = 'Selesai Diperiksa'
+                                   WHERE rekam_medis.id_rekam_medis = '$id_rekam_medis'";
+
+            if ($conn->query($update_antrian_sql) === TRUE) {
+                $message .= " Status antrian diperbarui.";
+            } else {
+                $message .= " Error: " . $conn->error;
+            }
+
+        } else {
+            $message = "Error: " . $conn->error;
+        }
+
+        // Prepare and execute the SELECT statement
+        $sql = "SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
                 FROM resep_obat
                 INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
                 INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
                 INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
                 INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
                 INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
-                WHERE resep_obat.id_rekammedis = ?
-            ");
+                WHERE resep_obat.id_rekammedis = '$id_rekam_medis'";
 
-            // Bind parameters
-            $stmt->bind_param("s", $id_rekam_medis);
+        $result = $conn->query($sql);
 
-            // Execute the statement
-            $stmt->execute();
-
-            // Get the result
-            $result = $stmt->get_result();
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $total_obat = $row['total_obat'];
-                $harga_perkunjungan = $row['harga_perkunjungan'];
-                $total_biaya = $total_obat + $harga_perkunjungan;
-            } else {
-                $message = "Error: Tidak dapat menghitung total biaya.";
-            }
-
-            // Close the statement
-            $stmt->close();
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $total_obat = $row['total_obat'];
+            $harga_perkunjungan = $row['harga_perkunjungan'];
+            $total_biaya = $total_obat + $harga_perkunjungan;
         } else {
-            $message = "Error: Data tidak lengkap.";
+            $message = "Error: Tidak dapat mengambil rincian pembayaran setelah pembayaran diproses.";
         }
+    } else {
+        $message = "Error: Data tidak lengkap.";
     }
-
-    if (isset($_POST['process_payment'])) {
-      if (isset($_POST['id_rekam_medis'])) {
-          $id_rekam_medis = $conn->real_escape_string($_POST['id_rekam_medis']);
-          $total_biaya = $_POST['total_biaya'];
-  
-          // Update status_pembayaran to 'Lunas' and set pembayaran to total_biaya
-          $update_sql = "UPDATE rekam_medis SET pembayaran = '$total_biaya', status_pembayaran = 'Lunas' WHERE id_rekam_medis = '$id_rekam_medis'";
-  
-          if ($conn->query($update_sql) === TRUE) {
-              $message = "Pembayaran berhasil.";
-          } else {
-              $message = "Error: " . $conn->error;
-          }
-  
-          // Prepare and execute the SELECT statement
-          $sql = "SELECT SUM(obat.harga_obat) AS total_obat, dokter.harga_perkunjungan
-                  FROM resep_obat
-                  INNER JOIN obat ON resep_obat.id_obat = obat.id_obat
-                  INNER JOIN rekam_medis ON resep_obat.id_rekammedis = rekam_medis.id_rekam_medis
-                  INNER JOIN antrian ON rekam_medis.id_antrian = antrian.id_antrian
-                  INNER JOIN jadwal_dokter ON antrian.id_jadwal = jadwal_dokter.id_jadwal
-                  INNER JOIN dokter ON jadwal_dokter.id_dokter = dokter.id_dokter
-                  WHERE resep_obat.id_rekammedis = '$id_rekam_medis'";
-  
-          $result = $conn->query($sql);
-  
-          if ($result->num_rows > 0) {
-              $row = $result->fetch_assoc();
-              $total_obat = $row['total_obat'];
-              $harga_perkunjungan = $row['harga_perkunjungan'];
-              $total_biaya = $total_obat + $harga_perkunjungan;
-          } else {
-              $message = "Error: Tidak dapat mengambil rincian pembayaran setelah pembayaran diproses.";
-          }
-      } else {
-          $message = "Error: Data tidak lengkap.";
-      }
   }
-  
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
