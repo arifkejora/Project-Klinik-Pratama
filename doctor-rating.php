@@ -32,15 +32,13 @@ $result_patient = mysqli_query($conn, $sql_patient);
 $row_patient = mysqli_fetch_assoc($result_patient);
 $total_patient = $row_patient['total_patient'];
 
-// Calculate average rating
-$stmt_avg_rating = $conn->prepare("SELECT AVG(r.rate_dokter) as avg_rating 
-                                   FROM rating r
-                                   JOIN rekam_medis rm ON r.id_rekam_medis = rm.id_rekam_medis
+$stmt_avg_rating = $conn->prepare("SELECT AVG(rm.rate_dokter) as avg_rating 
+                                   FROM rekam_medis rm
                                    JOIN antrian a ON rm.id_antrian = a.id_antrian
                                    JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
                                    JOIN dokter d ON jd.id_dokter = d.id_dokter
                                    WHERE d.id_dokter = ?");
-                                   
+
 // Bind the parameter (assuming id_dokter is an integer)
 $stmt_avg_rating->bind_param("i", $id_dokter);
 
@@ -54,7 +52,6 @@ $avg_rating = round($row_avg_rating['avg_rating'], 1);
 
 // Close the statement and connection
 $stmt_avg_rating->close();
-$conn->close();
 ?>
 
 <!DOCTYPE html>

@@ -18,18 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
 }
 
 // Query untuk mengambil data rekam medis
-$sql = "SELECT jd.tanggal, p.nama_pasien, a.id_antrian, rm.id_rekam_medis, MIN(ro.status) AS status_obat
-        FROM rekam_medis rm
-        INNER JOIN antrian a ON rm.id_antrian = a.id_antrian
-        INNER JOIN jadwal_dokter jd ON a.id_jadwal = jd.id_jadwal
-        INNER JOIN pasien p ON a.id_pasien = p.id_pasien
-        LEFT JOIN resep_obat ro ON rm.id_rekam_medis = ro.id_rekammedis
-        GROUP BY rm.id_rekam_medis";
-
-$result = mysqli_query($conn, $sql);
-$queueData = mysqli_fetch_all($result, MYSQLI_ASSOC);
-
-$avg_sql = "SELECT AVG(rate_farmasi) AS avg_rating FROM rating";
+$avg_sql = "SELECT AVG(rate_farmasi) AS avg_rating FROM rekam_medis";
 $avg_result = mysqli_query($conn, $avg_sql);
 $avg_row = mysqli_fetch_assoc($avg_result);
 $avg_rating = round($avg_row['avg_rating'], 1);
@@ -175,7 +164,7 @@ $avg_rating = round($avg_row['avg_rating'], 1);
             <tr>
                 <td><?php echo $row['tanggal']; ?></td>
                 <td><?php echo $row['nama_pasien']; ?></td>
-                <td>RM00<?php echo $row['id_rekam_medis']; ?></td>
+                <td><?php echo $row['id_rekam_medis']; ?></td>
                 <td><?php echo $row['status_obat']; ?></td>
                 <td>
                     <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">

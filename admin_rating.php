@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Calculate average rating and distribution
-$sql_avg = "SELECT AVG(rate_admin) as avg_rating FROM rating";
+$sql_avg = "SELECT AVG(rate_admin) as avg_rating FROM rekam_medis";
 $result_avg = mysqli_query($conn, $sql_avg);
 $avg_rating = 0;
 if ($result_avg && mysqli_num_rows($result_avg) > 0) {
@@ -38,7 +38,7 @@ if ($result_avg && mysqli_num_rows($result_avg) > 0) {
     $avg_rating = round($row_avg['avg_rating'], 1);
 }
 
-$sql_dist = "SELECT rate_admin, COUNT(rate_admin) as count FROM rating GROUP BY rate_admin ORDER BY rate_admin DESC";
+$sql_dist = "SELECT rate_admin, COUNT(rate_admin) as count FROM rekam_medis GROUP BY rate_admin ORDER BY rate_admin DESC";
 $result_dist = mysqli_query($conn, $sql_dist);
 $rating_distribution = [];
 while ($row_dist = mysqli_fetch_assoc($result_dist)) {
