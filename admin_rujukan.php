@@ -348,7 +348,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah_rujukan'])) {
                 if (mysqli_num_rows($result) > 0) {
                   while($row = mysqli_fetch_assoc($result)) {
                       echo "<tr>";
-                      echo "<td>RM00" . $row['id_rekam_medis'] . "</td>";
+                      echo "<td>" . $row['id_rekam_medis'] . "</td>";
                       echo "<td>" . $row['nama_pasien'] . "</td>";
                       echo "<td>" . $row['nama_rumahsakit'] . "</td>";
                       echo "<td>" . $row['tanggal_rujukan'] . "</td>";
