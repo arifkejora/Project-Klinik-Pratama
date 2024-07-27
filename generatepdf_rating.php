@@ -27,19 +27,27 @@ function generateRatingPDF($conn) {
 
     $pdf->SetFont('Arial', '', 8);
     $pdf->SetFillColor(230, 230, 230);
-    $pdf->Cell(20, 5, 'ID Rating', 1, 0, 'C', true);
     $pdf->Cell(40, 5, 'ID Rekam Medis', 1, 0, 'C', true);
-    $pdf->Cell(20, 5, 'Rating', 1, 0, 'C', true);
-    $pdf->Cell(0, 5, 'Ulasan', 1, 1, 'C', true);
+    $pdf->Cell(20, 5, 'Rate Admin', 1, 0, 'C', true);
+    $pdf->Cell(20, 5, 'Ulasan Admin', 1, 0, 'C', true);
 
-    $sql = "SELECT * FROM rating";
+    $pdf->Cell(20, 5, 'Rate Dokter', 1, 0, 'C', true);
+    $pdf->Cell(20, 5, 'Ulasan Dokter', 1, 0, 'C', true);
+
+    $pdf->Cell(20, 5, 'Rate Farmasi', 1, 0, 'C', true);
+    $pdf->Cell(0, 5, 'Ulasan Farmasi', 1, 1, 'C', true);
+
+    $sql = "SELECT * FROM rekam_medis";
     $result = $conn->query($sql);
     if ($result->num_rows > 0):
         while ($row = $result->fetch_assoc()) {
-            $pdf->Cell(20, 5, $row['id_rating'], 1, 0, 'C');
             $pdf->Cell(40, 5, $row['id_rekam_medis'], 1, 0, 'C');
-            $pdf->Cell(20, 5, $row['rating'], 1, 0, 'C');
-            $pdf->MultiCell(0, 5, $row['ulasan'], 1, 'L');
+            $pdf->Cell(20, 5, $row['rate_admin'], 1, 0, 'C');
+            $pdf->Cell(20, 5, $row['ulasan_admin'], 1, 0, 'C');
+            $pdf->Cell(20, 5, $row['rate_dokter'], 1, 0, 'C');
+            $pdf->Cell(20, 5, $row['ulasan_dokter'], 1, 0, 'C');
+            $pdf->Cell(20, 5, $row['rate_farmasi'], 1, 0, 'C');
+            $pdf->MultiCell(0, 5, $row['ulasan_farmasi'], 1, 'L');
         }
     else:
         $pdf->Cell(0, 10, 'Tidak ada data rating', 1, 1, 'C');

@@ -173,23 +173,33 @@ $total_patient = $row['total_patient'];
           <table class="table table-bordered">
             <thead>
               <tr>
-                <th scope="col">ID Rating</th>
                 <th scope="col">ID Rekam Medis</th>
-                <th scope="col">Rating</th>
-                <th scope="col">Ulasan</th>
+                <th scope="col">Rate Admin</th>
+                <th scope="col">Ulasan Admin</th>
+                <th scope="col">Rate Dokter</th>
+                <th scope="col">Ulasan Dokter</th>
+                <th scope="col">Rate Farmasi</th>
+                <th scope="col">Ulasan Farmasi</th>
               </tr>
             </thead>
             <tbody>
               <?php
-              $sql = "SELECT id_rating, id_rekam_medis, rating, ulasan FROM rating";
+              $sql = "SELECT id_rekam_medis, rate_admin, ulasan_admin, rate_dokter, ulasan_dokter, rate_farmasi, ulasan_farmasi FROM rekam_medis";
               $result = $conn->query($sql);
               if ($result->num_rows > 0):
                 while ($row = $result->fetch_assoc()): ?>
                   <tr>
-                    <td><?php echo $row['id_rating']; ?></td>
                     <td><?php echo $row['id_rekam_medis']; ?></td>
-                    <td><?php echo $row['rating']; ?></td>
-                    <td><?php echo $row['ulasan']; ?></td>
+                    <td><?php echo $row['rate_admin']; ?></td>
+                    <td><?php echo $row['ulasan_admin']; ?></td>
+
+                    <td><?php echo $row['rate_dokter']; ?></td>
+                    <td><?php echo $row['ulasan_dokter']; ?></td>
+
+                    <td><?php echo $row['rate_farmasi']; ?></td>
+                    <td><?php echo $row['ulasan_farmasi']; ?></td>
+
+
                   </tr>
                 <?php endwhile; ?>
               <?php else: ?>
