@@ -15,7 +15,7 @@ if (isset($_GET['id_rekam_medis'])) {
                         INNER JOIN detail_pasien dp ON p.id_pasien = dp.id_pasien
                         WHERE rm.id_rekam_medis = ?";
     $stmt_rekam_medis = $conn->prepare($sql_rekam_medis);
-    $stmt_rekam_medis->bind_param("i", $id);
+    $stmt_rekam_medis->bind_param("s", $id);
     $stmt_rekam_medis->execute();
     $result_rekam_medis = $stmt_rekam_medis->get_result();
     $rekam_medis = $result_rekam_medis->fetch_assoc();
@@ -30,7 +30,7 @@ if (isset($_GET['id_rekam_medis'])) {
                   INNER JOIN obat o ON ro.id_obat = o.id_obat 
                   WHERE ro.id_rekammedis = ?";
     $stmt_resep = $conn->prepare($sql_resep);
-    $stmt_resep->bind_param("i", $id);
+    $stmt_resep->bind_param("s", $id);
     $stmt_resep->execute();
     $result_resep = $stmt_resep->get_result();
     $resep_obat = [];
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($sql_update_rating) {
         $stmt_update_rating = $conn->prepare($sql_update_rating);
-        $stmt_update_rating->bind_param("issi", $rating, $ulasan, $id_rekam_medis, $id_antrian);
+        $stmt_update_rating->bind_param("isss", $rating, $ulasan, $id_rekam_medis, $id_antrian);
 
         if ($stmt_update_rating->execute()) {
             $message = "Rating and review submitted successfully.";
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $sql_rating = "SELECT rate_admin, rate_dokter, rate_farmasi, ulasan_admin, ulasan_dokter, ulasan_farmasi 
                FROM rekam_medis WHERE id_rekam_medis = ?";
 $stmt_rating = $conn->prepare($sql_rating);
-$stmt_rating->bind_param("i", $id);
+$stmt_rating->bind_param("s", $id);
 $stmt_rating->execute();
 $result_rating = $stmt_rating->get_result();
 $ratings = $result_rating->fetch_assoc();
@@ -97,10 +97,9 @@ $ratings = $result_rating->fetch_assoc();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detail Pemeriksaan</title>
     <style>
-        /* CSS Anda di sini */
         .rating {
             display: flex;
-            flex-direction: row; /* Urutan bintang dari kiri ke kanan */
+            flex-direction: row-reverse; /* Urutan bintang dari kanan ke kiri */
         }
 
         .rating .star {
@@ -228,7 +227,7 @@ $ratings = $result_rating->fetch_assoc();
                     </div>
 
                     <div class="row mt-3">
-                        <div class="col-md-12">
+                        <div class="col-md-0">
                             <label for="inputRating" class="form-label">Rating</label>
                             <div class="rating">
                                 <span class="star" data-value="5">&#9733;</span>
